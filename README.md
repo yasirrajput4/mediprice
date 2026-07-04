@@ -172,7 +172,7 @@ mediprice/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/<your-username>/mediprice.git
+git clone https://github.com/yasirrajput4/mediprice.git
 cd mediprice
 ```
 
