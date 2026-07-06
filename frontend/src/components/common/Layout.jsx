@@ -235,19 +235,28 @@ export default function Layout() {
               <h4 className="text-white text-sm font-semibold mb-3">Company</h4>
               <ul className="space-y-2 text-xs">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link
+                    to="/about"
+                    className="hover:text-white transition-colors"
+                  >
                     About Us
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link
+                    to="/contact"
+                    className="hover:text-white transition-colors"
+                  >
                     Contact
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link
+                    to="/careers"
+                    className="hover:text-white transition-colors"
+                  >
                     Careers
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
@@ -255,19 +264,28 @@ export default function Layout() {
               <h4 className="text-white text-sm font-semibold mb-3">Legal</h4>
               <ul className="space-y-2 text-xs">
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link
+                    to="/privacy"
+                    className="hover:text-white transition-colors"
+                  >
                     Privacy Policy
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link
+                    to="/terms"
+                    className="hover:text-white transition-colors"
+                  >
                     Terms of Service
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="hover:text-white transition-colors">
+                  <Link
+                    to="/refunds"
+                    className="hover:text-white transition-colors"
+                  >
                     Refund Policy
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>
