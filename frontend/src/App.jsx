@@ -14,10 +14,10 @@ import AdminServicesPage from "./pages/admin/AdminServicesPage";
 import AdminBookingsPage from "./pages/admin/AdminBookingsPage";
 import { useAuthStore } from "./store/authStore";
 
-function ProtectedRoute({ children, role }) {
+function ProtectedRoute({ children, allowedRole }) {
   const { user } = useAuthStore();
   if (!user) return <Navigate to="/login" replace />;
-  if (role && user.role !== role && user.role !== "super_admin") {
+  if (allowedRole && user.role !== allowedRole && user.role !== "super_admin") {
     return <Navigate to="/" replace />;
   }
   return children;
@@ -52,7 +52,7 @@ export default function App() {
       <Route
         path="/admin"
         element={
-          <ProtectedRoute role="hospital_admin">
+          <ProtectedRoute allowedRole="hospital_admin">
             <AdminLayout />
           </ProtectedRoute>
         }
