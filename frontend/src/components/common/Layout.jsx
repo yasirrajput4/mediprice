@@ -272,7 +272,10 @@ export default function Layout() {
               </ul>
             </div>
           </div>
-          <div className="border-t border-gray-800 pt-6 text-xs text-center">
+          <div
+            suppressHydrationWarning
+            className="border-t border-gray-800 pt-6 text-xs text-center"
+          >
             © {new Date().getFullYear()} MediPrice. All rights reserved. Prices
             are indicative — verify with the hospital.
           </div>
