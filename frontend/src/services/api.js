@@ -1,14 +1,17 @@
-import axios from 'axios';
+import axios from "axios";
+
+// Centralized versioned storage key to protect against data shape changes
+const AUTH_STORAGE_KEY = "mediprice-auth:v1";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: import.meta.env.VITE_API_URL || "/api",
   timeout: 15000,
 });
 
 // Attach access token to every request
 api.interceptors.request.use((config) => {
   // Import store inline to avoid circular deps
-  const raw = localStorage.getItem('mediprice-auth');
+  const raw = localStorage.getItem(AUTH_STORAGE_KEY);
   if (raw) {
     const { state } = JSON.parse(raw);
     if (state?.accessToken) {
@@ -40,16 +43,23 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const raw = localStorage.getItem('mediprice-auth');
-        const { state } = JSON.parse(raw || '{}');
+        const raw = localStorage.getItem(AUTH_STORAGE_KEY);
+        const { state } = JSON.parse(raw || "{}");
         const { data } = await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
-          { refreshToken: state?.refreshToken }
+          { refreshToken: state?.refreshToken },
         );
 
         // Update stored tokens
-        const updated = { ...state, accessToken: data.accessToken, refreshToken: data.refreshToken };
-        localStorage.setItem('mediprice-auth', JSON.stringify({ state: updated }));
+        const updated = {
+          ...state,
+          accessToken: data.accessToken,
+          refreshToken: data.refreshToken,
+        };
+        localStorage.setItem(
+          AUTH_STORAGE_KEY,
+          JSON.stringify({ state: updated }),
+        );
 
         queue.forEach((p) => p.resolve(data.accessToken));
         queue = [];
@@ -59,15 +69,15 @@ api.interceptors.response.use(
       } catch (refreshErr) {
         queue.forEach((p) => p.reject(refreshErr));
         queue = [];
-        localStorage.removeItem('mediprice-auth');
-        window.location.href = '/login';
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+        window.location.href = "/login";
         return Promise.reject(refreshErr);
       } finally {
         isRefreshing = false;
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;
