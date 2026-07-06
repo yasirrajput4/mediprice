@@ -62,6 +62,7 @@ export default function AdminLayout() {
             <div className="text-xs text-gray-400 truncate">{user?.email}</div>
           </div>
           <button
+          type="button"
             onClick={handleLogout}
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-red-900/40 hover:text-red-400 transition-colors"
           >
@@ -79,7 +80,7 @@ export default function AdminLayout() {
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top bar */}
         <header className="bg-white border-b border-gray-100 px-4 h-14 flex items-center gap-3 flex-shrink-0">
-          <button onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100">
+          <button type="button" onClick={() => setSidebarOpen(true)} className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100">
             <Menu size={20} />
           </button>
           <h1 className="text-sm font-semibold text-gray-700">Hospital Admin</h1>

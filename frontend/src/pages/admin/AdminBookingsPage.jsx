@@ -1,30 +1,41 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Calendar, Search, ChevronDown } from 'lucide-react';
-import toast from 'react-hot-toast';
-import { adminApi } from '../../services/apiServices';
-import { LoadingSpinner, EmptyState, Badge, Pagination } from '../../components/common/UI';
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Search, ChevronDown } from "lucide-react";
+import toast from "react-hot-toast";
+import { adminApi } from "../../services/apiServices";
+import {
+  LoadingSpinner,
+  EmptyState,
+  Badge,
+  Pagination,
+} from "../../components/common/UI";
 
 const HOSPITAL_ID = 1;
 
 const STATUS_COLORS = {
-  confirmed: 'green',
-  pending: 'amber',
-  completed: 'blue',
-  cancelled: 'red',
-  no_show: 'gray',
+  confirmed: "green",
+  pending: "amber",
+  completed: "blue",
+  cancelled: "red",
+  no_show: "gray",
 };
 
-const STATUS_OPTIONS = ['confirmed', 'pending', 'completed', 'cancelled', 'no_show'];
+const STATUS_OPTIONS = [
+  "confirmed",
+  "pending",
+  "completed",
+  "cancelled",
+  "no_show",
+];
 
 export default function AdminBookingsPage() {
   const qc = useQueryClient();
-  const [date, setDate] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [date, setDate] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
 
   const { data, isLoading } = useQuery({
-    queryKey: ['admin-bookings', HOSPITAL_ID, date, statusFilter, page],
+    queryKey: ["admin-bookings", HOSPITAL_ID, date, statusFilter, page],
     queryFn: () =>
       adminApi.bookings(HOSPITAL_ID, {
         date: date || undefined,
@@ -39,10 +50,11 @@ export default function AdminBookingsPage() {
     mutationFn: ({ bookingId, status }) =>
       adminApi.updateBookingStatus(HOSPITAL_ID, bookingId, status),
     onSuccess: () => {
-      toast.success('Status updated');
-      qc.invalidateQueries(['admin-bookings', HOSPITAL_ID]);
+      toast.success("Status updated");
+      qc.invalidateQueries(["admin-bookings", HOSPITAL_ID]);
     },
-    onError: (err) => toast.error(err?.response?.data?.error || 'Failed to update'),
+    onError: (err) =>
+      toast.error(err?.response?.data?.error || "Failed to update"),
   });
 
   const bookings = data?.bookings || [];
@@ -52,49 +64,72 @@ export default function AdminBookingsPage() {
     <div className="space-y-5">
       <div>
         <h1 className="text-xl font-bold text-gray-900">Bookings</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Manage and track all patient bookings</p>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Manage and track all patient bookings
+        </p>
       </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
         <div className="relative">
-          <Calendar size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+          <Calendar
+            size={15}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+          />
           <input
             type="date"
             value={date}
-            onChange={(e) => { setDate(e.target.value); setPage(1); }}
+            onChange={(e) => {
+              setDate(e.target.value);
+              setPage(1);
+            }}
             className="input pl-9 w-44 text-sm"
           />
         </div>
 
         <select
           value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
+          onChange={(e) => {
+            setStatusFilter(e.target.value);
+            setPage(1);
+          }}
           className="input w-40 text-sm"
         >
           <option value="">All Statuses</option>
           {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s} className="capitalize">{s.replace('_', ' ')}</option>
+            <option key={s} value={s} className="capitalize">
+              {s.replace("_", " ")}
+            </option>
           ))}
         </select>
 
         {(date || statusFilter) && (
           <button
-            onClick={() => { setDate(''); setStatusFilter(''); setPage(1); }}
+            type="button"
+            onClick={() => {
+              setDate("");
+              setStatusFilter("");
+              setPage(1);
+            }}
             className="text-sm text-blue-600 hover:underline"
           >
             Clear filters
           </button>
         )}
 
-        <span className="ml-auto text-sm text-gray-400">{pagination.total || 0} bookings</span>
+        <span className="ml-auto text-sm text-gray-400">
+          {pagination.total || 0} bookings
+        </span>
       </div>
 
       {/* Table */}
       {isLoading ? (
         <LoadingSpinner />
       ) : bookings.length === 0 ? (
-        <EmptyState title="No bookings found" description="Try adjusting your filters." />
+        <EmptyState
+          title="No bookings found"
+          description="Try adjusting your filters."
+        />
       ) : (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
           <table className="w-full text-sm min-w-[700px]">
@@ -113,37 +148,54 @@ export default function AdminBookingsPage() {
               {bookings.map((b) => (
                 <tr key={b.uuid} className="hover:bg-gray-50 transition-colors">
                   <td className="px-5 py-3.5">
-                    <div className="font-medium text-gray-900">{b.patient_name}</div>
-                    <div className="text-xs text-gray-400">{b.patient_phone}</div>
+                    <div className="font-medium text-gray-900">
+                      {b.patient_name}
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      {b.patient_phone}
+                    </div>
                   </td>
                   <td className="px-5 py-3.5">
-                    <div className="text-gray-700 max-w-[180px] truncate">{b.service_name}</div>
+                    <div className="text-gray-700 max-w-[180px] truncate">
+                      {b.service_name}
+                    </div>
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="text-gray-700">
-                      {new Date(b.slot_date).toLocaleDateString('en-IN', {
-                        day: 'numeric', month: 'short', year: 'numeric',
+                      {new Date(b.slot_date).toLocaleDateString("en-IN", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric",
                       })}
                     </div>
-                    <div className="text-xs text-gray-400">{String(b.slot_time).substring(0, 5)}</div>
+                    <div className="text-xs text-gray-400">
+                      {String(b.slot_time).substring(0, 5)}
+                    </div>
                   </td>
                   <td className="px-5 py-3.5 text-right font-medium text-gray-900">
-                    ₹{Number(b.total_amount).toLocaleString('en-IN')}
+                    ₹{Number(b.total_amount).toLocaleString("en-IN")}
                   </td>
                   <td className="px-5 py-3.5 text-center">
-                    <Badge color={b.payment_status === 'paid' ? 'green' : 'amber'}>
-                      {b.payment_status || 'pending'}
+                    <Badge
+                      color={b.payment_status === "paid" ? "green" : "amber"}
+                    >
+                      {b.payment_status || "pending"}
                     </Badge>
                   </td>
                   <td className="px-5 py-3.5 text-center">
-                    <Badge color={STATUS_COLORS[b.status] || 'gray'}>
-                      {b.status?.replace('_', ' ')}
+                    <Badge color={STATUS_COLORS[b.status] || "gray"}>
+                      {b.status?.replace("_", " ")}
                     </Badge>
                   </td>
                   <td className="px-5 py-3.5">
                     <StatusDropdown
                       current={b.status}
-                      onSelect={(status) => updateStatusMutation.mutate({ bookingId: b.uuid, status })}
+                      onSelect={(status) =>
+                        updateStatusMutation.mutate({
+                          bookingId: b.uuid,
+                          status,
+                        })
+                      }
                       disabled={updateStatusMutation.isPending}
                     />
                   </td>
@@ -154,7 +206,11 @@ export default function AdminBookingsPage() {
         </div>
       )}
 
-      <Pagination page={pagination.page || 1} pages={pagination.pages || 1} onChange={setPage} />
+      <Pagination
+        page={pagination.page || 1}
+        pages={pagination.pages || 1}
+        onChange={setPage}
+      />
     </div>
   );
 }
@@ -166,6 +222,7 @@ function StatusDropdown({ current, onSelect, disabled }) {
   return (
     <div className="relative inline-block">
       <button
+        type="button"
         onClick={() => setOpen(!open)}
         disabled={disabled}
         className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition disabled:opacity-40"
@@ -178,11 +235,15 @@ function StatusDropdown({ current, onSelect, disabled }) {
           <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1 overflow-hidden">
             {next.map((s) => (
               <button
+                type="button"
                 key={s}
-                onClick={() => { onSelect(s); setOpen(false); }}
+                onClick={() => {
+                  onSelect(s);
+                  setOpen(false);
+                }}
                 className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 capitalize transition"
               >
-                {s.replace('_', ' ')}
+                {s.replace("_", " ")}
               </button>
             ))}
           </div>
