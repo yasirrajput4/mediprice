@@ -22,6 +22,18 @@
   }
 }
 
+/* WCAG 2.3.3 — Disable all animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 @layer components {
   .btn-primary {
     @apply bg-blue-600 text-white px-5 py-2.5 rounded-xl font-medium
