@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useNavigate, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -10,6 +10,8 @@ import {
   ChevronDown,
   X,
   ArrowUpDown,
+  Map,
+  List,
 } from "lucide-react";
 import { hospitalsApi, servicesApi } from "../services/apiServices";
 import {
@@ -19,6 +21,7 @@ import {
   StarRating,
   Badge,
 } from "../components/common/UI";
+import { HospitalsMap } from "../components/common/HospitalMap";
 
 const SORT_OPTIONS = [
   { value: "price", label: "Lowest Price" },
@@ -39,18 +42,25 @@ export default function SearchPage() {
   const [maxWait, setMaxWait] = useState("");
   const [filterOpen, setFilterOpen] = useState(false);
   const [page, setPage] = useState(1);
+  const [serviceId, setServiceId] = useState(null);
+  const [viewMode, setViewMode] = useState("list"); // 'list' | 'map'
 
   const category = searchParams.get("category") || "";
 
-  // Search for the service to get a service_id
+  // First: search for the service to get a service_id for price filtering
   const { data: serviceSearch } = useQuery({
     queryKey: ["service-search", q],
     queryFn: () => servicesApi.search({ q, limit: 1 }),
     enabled: !!q,
   });
 
-  // Derived state: No need for useEffect or extra useState
-  const serviceId = serviceSearch?.services?.[0]?.id || null;
+  useEffect(() => {
+    if (serviceSearch?.services?.length) {
+      setServiceId(serviceSearch.services[0].id);
+    } else {
+      setServiceId(null);
+    }
+  }, [serviceSearch]);
 
   const params = {
     city: city || undefined,
@@ -63,7 +73,7 @@ export default function SearchPage() {
     ...(serviceId && { service_id: serviceId }),
   };
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isFetching } = useQuery({
     queryKey: ["hospitals", params],
     queryFn: () => hospitalsApi.list(params),
     keepPreviousData: true,
@@ -125,7 +135,7 @@ export default function SearchPage() {
       </form>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Filters */}
+        {/* Filters — sidebar on desktop, drawer on mobile */}
         <aside
           className={`lg:w-56 flex-shrink-0 ${filterOpen ? "block" : "hidden lg:block"}`}
         >
@@ -134,7 +144,6 @@ export default function SearchPage() {
               <h3 className="font-semibold text-gray-900">Filters</h3>
               {hasFilters && (
                 <button
-                  type="button"
                   onClick={clearFilters}
                   className="text-xs text-red-500 hover:underline flex items-center gap-1"
                 >
@@ -151,10 +160,13 @@ export default function SearchPage() {
               <div className="flex gap-1">
                 {[3, 3.5, 4, 4.5].map((r) => (
                   <button
-                    type="button"
                     key={r}
                     onClick={() => setMinRating(minRating == r ? "" : r)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${minRating == r ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 text-gray-600 hover:border-blue-300"}`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${
+                      minRating == r
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-gray-200 text-gray-600 hover:border-blue-300"
+                    }`}
                   >
                     {r}+
                   </button>
@@ -184,10 +196,13 @@ export default function SearchPage() {
               <div className="flex gap-1">
                 {[15, 30, 60].map((w) => (
                   <button
-                    type="button"
                     key={w}
                     onClick={() => setMaxWait(maxWait == w ? "" : w)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${maxWait == w ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 text-gray-600 hover:border-blue-300"}`}
+                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${
+                      maxWait == w
+                        ? "bg-blue-600 text-white border-blue-600"
+                        : "border-gray-200 text-gray-600 hover:border-blue-300"
+                    }`}
                   >
                     {w}m
                   </button>
@@ -196,7 +211,6 @@ export default function SearchPage() {
             </div>
 
             <button
-              type="button"
               onClick={() => {
                 setPage(1);
                 setFilterOpen(false);
@@ -210,54 +224,101 @@ export default function SearchPage() {
 
         {/* Results */}
         <div className="flex-1 min-w-0">
+          {/* Toolbar */}
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <button
-                type="button"
                 onClick={() => setFilterOpen(!filterOpen)}
                 className="lg:hidden btn-secondary text-sm py-2 flex items-center gap-1.5"
               >
                 <SlidersHorizontal size={15} /> Filters
+                {hasFilters && (
+                  <Badge color="blue">
+                    {[minRating, maxPrice, maxWait].filter(Boolean).length}
+                  </Badge>
+                )}
               </button>
               {!isLoading && (
                 <span className="text-sm text-gray-500">
                   {pagination.total || 0} hospitals{q ? ` for "${q}"` : ""}
+                  {city ? ` in ${city}` : ""}
                 </span>
               )}
             </div>
-            <select
-              value={sort}
-              onChange={(e) => {
-                setSort(e.target.value);
-                setPage(1);
-              }}
-              className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none"
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              {/* Map / List toggle */}
+              <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setViewMode("list")}
+                  className={`px-3 py-1.5 text-xs flex items-center gap-1 transition ${
+                    viewMode === "list"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  <List size={13} /> List
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode("map")}
+                  className={`px-3 py-1.5 text-xs flex items-center gap-1 transition ${
+                    viewMode === "map"
+                      ? "bg-blue-600 text-white"
+                      : "text-gray-500 hover:bg-gray-50"
+                  }`}
+                >
+                  <Map size={13} /> Map
+                </button>
+              </div>
+
+              <ArrowUpDown size={14} className="text-gray-400" />
+              <select
+                value={sort}
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setPage(1);
+                }}
+                className="text-sm border border-gray-200 rounded-lg px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                {SORT_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>
+                    {o.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
+          {/* Map View */}
+          {viewMode === "map" && !isLoading && hospitals.length > 0 && (
+            <div className="mb-4">
+              <HospitalsMap
+                hospitals={hospitals}
+                height="450px"
+                onSelect={(h) => navigate(`/hospitals/${h.id}`)}
+              />
+            </div>
+          )}
+
+          {/* Cards */}
           {isLoading ? (
             <LoadingSpinner text="Searching hospitals..." />
-          ) : hospitals.length === 0 ? (
+          ) : viewMode === "list" && hospitals.length === 0 ? (
             <EmptyState
               title="No hospitals found"
-              description="Try a different search."
+              description="Try a different service, location, or relax your filters."
               action={
                 <button
                   type="button"
                   onClick={clearFilters}
-                  className="btn-secondary"
+                  className="btn-secondary text-sm"
                 >
                   Clear Filters
                 </button>
               }
             />
-          ) : (
+          ) : viewMode === "list" ? (
             <div className="space-y-4">
               {hospitals.map((hospital) => (
                 <HospitalCard
@@ -268,7 +329,8 @@ export default function SearchPage() {
                 />
               ))}
             </div>
-          )}
+          ) : null}
+
           <Pagination
             page={pagination.page}
             pages={pagination.pages}
@@ -282,14 +344,70 @@ export default function SearchPage() {
 
 function HospitalCard({ hospital, serviceId, serviceName }) {
   const navigate = useNavigate();
+
   return (
     <div className="card hover:shadow-md transition-all flex flex-col sm:flex-row gap-4">
-      <div className="w-16 h-16 rounded-xl bg-blue-50 flex items-center justify-center font-bold text-blue-600">
+      {/* Logo */}
+      <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center flex-shrink-0 text-2xl font-bold text-blue-600">
         {hospital.name.charAt(0)}
       </div>
+
+      {/* Info */}
       <div className="flex-1 min-w-0">
-        <h3 className="font-semibold text-gray-900">{hospital.name}</h3>
-        <p className="text-sm text-gray-500 mt-1">{hospital.address}</p>
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-gray-900">{hospital.name}</h3>
+              {hospital.is_verified && <Badge color="green">✓ Verified</Badge>}
+            </div>
+            <div className="flex items-center gap-1.5 text-sm text-gray-500 mt-0.5">
+              <MapPin size={13} />
+              <span className="truncate">{hospital.address}</span>
+              {hospital.distance_km && (
+                <span className="text-blue-600 font-medium flex-shrink-0">
+                  · {hospital.distance_km} km
+                </span>
+              )}
+            </div>
+          </div>
+          {hospital.service_price && (
+            <div className="text-right flex-shrink-0">
+              <div className="text-xl font-bold text-blue-700">
+                ₹{Number(hospital.service_price).toLocaleString("en-IN")}
+              </div>
+              {serviceName && (
+                <div className="text-xs text-gray-400">{serviceName}</div>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 mt-3">
+          <StarRating rating={hospital.rating} size={13} />
+          <span className="text-xs text-gray-400">
+            ({hospital.review_count} reviews)
+          </span>
+          <span className="flex items-center gap-1 text-xs text-gray-500">
+            <Clock size={12} /> ~{hospital.avg_wait_min} min wait
+          </span>
+          <span className="text-xs text-gray-400">
+            Fairness: {hospital.fairness_score}/100
+          </span>
+        </div>
+
+        {hospital.accreditations?.length > 0 && (
+          <div className="flex gap-1.5 mt-2 flex-wrap">
+            {hospital.accreditations.map((a) => (
+              <span
+                key={a}
+                className="badge bg-emerald-50 text-emerald-700 text-xs"
+              >
+                {a}
+              </span>
+            ))}
+          </div>
+        )}
+
         <div className="flex gap-2 mt-4">
           <Link
             to={`/hospitals/${hospital.id}`}
@@ -299,7 +417,6 @@ function HospitalCard({ hospital, serviceId, serviceName }) {
           </Link>
           {serviceId && (
             <button
-              type="button"
               onClick={() => navigate(`/book/${hospital.id}/${serviceId}`)}
               className="btn-primary text-sm py-2 px-4"
             >
