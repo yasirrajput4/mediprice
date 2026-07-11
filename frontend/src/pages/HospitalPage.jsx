@@ -18,6 +18,7 @@ import {
   Badge,
   PriceTag,
 } from "../components/common/UI";
+import HospitalMap from "../components/common/HospitalMap";
 
 export default function HospitalPage() {
   const { id } = useParams();
@@ -337,27 +338,46 @@ export default function HospitalPage() {
 
       {/* About tab */}
       {activeTab === "about" && (
-        <div className="card">
-          <h3 className="font-semibold text-gray-900 mb-3">
-            About {hospital.name}
-          </h3>
-          <p className="text-sm text-gray-600 leading-relaxed">
-            {hospital.description || "No description available."}
-          </p>
-          {hospital.facilities?.length > 0 && (
-            <>
-              <h4 className="font-semibold text-gray-800 mt-5 mb-2 text-sm">
-                Facilities
-              </h4>
-              <div className="flex flex-wrap gap-2">
-                {hospital.facilities.map((f) => (
-                  <Badge key={f} color="gray">
-                    {f}
-                  </Badge>
-                ))}
-              </div>
-            </>
-          )}
+        <div className="space-y-4">
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 mb-3">
+              About {hospital.name}
+            </h3>
+            <p className="text-sm text-gray-600 leading-relaxed">
+              {hospital.description || "No description available."}
+            </p>
+            {hospital.facilities?.length > 0 && (
+              <>
+                <h4 className="font-semibold text-gray-800 mt-5 mb-2 text-sm">
+                  Facilities
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {hospital.facilities.map((f) => (
+                    <Badge key={f} color="gray">
+                      {f}
+                    </Badge>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Map */}
+          <div className="card">
+            <h3 className="font-semibold text-gray-900 mb-3">Location</h3>
+            <HospitalMap
+              lat={hospital.lat}
+              lng={hospital.lng}
+              name={hospital.name}
+              address={hospital.address}
+              height="300px"
+            />
+            {hospital.address && (
+              <p className="text-sm text-gray-500 mt-3 flex items-center gap-1.5">
+                📍 {hospital.address}, {hospital.city}
+              </p>
+            )}
+          </div>
         </div>
       )}
     </div>
