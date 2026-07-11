@@ -57,7 +57,7 @@ It also includes a **hospital admin panel** so hospital staff can manage their o
 | **Cache**            | Redis                                              |
 | **Payments**         | Razorpay                                           |
 | **Auth**             | JWT (short-lived access + rotating refresh tokens) |
-| **Maps**             | Google Maps API                                    |
+| **Maps**             | Leaflet + OpenStreetMap (no API key needed)        |
 | **Charts**           | Recharts                                           |
 | **Containerization** | Docker & Docker Compose                            |
 
@@ -194,7 +194,7 @@ npm install
 # Backend
 cd backend
 cp .env.example .env
-# → fill in DATABASE_URL, JWT secrets, Razorpay keys, Google Maps key
+# → fill in DATABASE_URL, JWT secrets, Razorpay keys
 
 # Frontend
 cd ../frontend
