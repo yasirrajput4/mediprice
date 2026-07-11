@@ -248,7 +248,11 @@ export default function SearchPage() {
               title="No hospitals found"
               description="Try a different search."
               action={
-                <button onClick={clearFilters} className="btn-secondary">
+                <button
+                  type="button"
+                  onClick={clearFilters}
+                  className="btn-secondary"
+                >
                   Clear Filters
                 </button>
               }
