@@ -51,7 +51,7 @@ INSERT INTO hospitals (name, description, address, city, state, pincode, lat, ln
  ARRAY['NABH','NABL'], ARRAY['Wi-Fi','Parking','Pharmacy','ATM']),
 
 ('CIMS Hospital',
- 'Cardiac Institute of Medical Sciences — Gujarat's premier cardiac and diagnostic center.',
+ 'Cardiac Institute of Medical Sciences — Gujarat''s premier cardiac and diagnostic center.',
  'Near Shukan Mall, Science City Road, Sola', 'Ahmedabad', 'Gujarat', '380060',
  23.0650, 72.5270, '079-3010-1010', 'info@cims.org',
  ARRAY['NABH','NABL','ISO 14001'], ARRAY['Cardiac ICU','24x7 Lab','Parking','Canteen']),
@@ -63,7 +63,7 @@ INSERT INTO hospitals (name, description, address, city, state, pincode, lat, ln
  ARRAY['NABL'], ARRAY['Parking','Pharmacy','Diabetic Clinic']),
 
 ('HCG Cancer Centre',
- 'India's leading oncology network — specialized cancer imaging, diagnostics, and radiation therapy.',
+ 'India''s leading oncology network — specialized cancer imaging, diagnostics, and radiation therapy.',
  'HCG Towers, Mithakhali Six Roads', 'Ahmedabad', 'Gujarat', '380009',
  23.0390, 72.5500, '079-4000-4000', 'ahmedabad@hcgoncology.com',
  ARRAY['NABH','CAP'], ARRAY['Dedicated Cancer Lab','PET-CT','Counselling','Parking'])
