@@ -144,6 +144,7 @@ export default function SearchPage() {
               <h3 className="font-semibold text-gray-900">Filters</h3>
               {hasFilters && (
                 <button
+                  type="button"
                   onClick={clearFilters}
                   className="text-xs text-red-500 hover:underline flex items-center gap-1"
                 >
@@ -160,6 +161,7 @@ export default function SearchPage() {
               <div className="flex gap-1">
                 {[3, 3.5, 4, 4.5].map((r) => (
                   <button
+                    type="button"
                     key={r}
                     onClick={() => setMinRating(minRating == r ? "" : r)}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${
@@ -196,6 +198,7 @@ export default function SearchPage() {
               <div className="flex gap-1">
                 {[15, 30, 60].map((w) => (
                   <button
+                    type="button"
                     key={w}
                     onClick={() => setMaxWait(maxWait == w ? "" : w)}
                     className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${
@@ -211,6 +214,7 @@ export default function SearchPage() {
             </div>
 
             <button
+              type="button"
               onClick={() => {
                 setPage(1);
                 setFilterOpen(false);
@@ -228,6 +232,7 @@ export default function SearchPage() {
           <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <button
+                type="button"
                 onClick={() => setFilterOpen(!filterOpen)}
                 className="lg:hidden btn-secondary text-sm py-2 flex items-center gap-1.5"
               >
@@ -417,6 +422,7 @@ function HospitalCard({ hospital, serviceId, serviceName }) {
           </Link>
           {serviceId && (
             <button
+              type="button"
               onClick={() => navigate(`/book/${hospital.id}/${serviceId}`)}
               className="btn-primary text-sm py-2 px-4"
             >
