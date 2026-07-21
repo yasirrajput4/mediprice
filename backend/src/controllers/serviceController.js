@@ -1,10 +1,10 @@
-const { query } = require('../config/db');
-const { cacheGet, cacheSet } = require('../config/redis');
+const { query } = require("../config/db");
+const { cacheGet, cacheSet } = require("../config/redis");
 
 // GET /api/services/search?q=mri&city=Ahmedabad
 async function searchServices(req, res, next) {
   try {
-    const { q = '', city, category, page = 1, limit = 20 } = req.query;
+    const { q = "", city, category, page = 1, limit = 20 } = req.query;
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     const cacheKey = `search:${q}:${city}:${category}:${page}:${limit}`;
@@ -33,7 +33,7 @@ async function searchServices(req, res, next) {
       p++;
     }
 
-    const where = conditions.length ? 'WHERE ' + conditions.join(' AND ') : '';
+    const where = conditions.length ? "WHERE " + conditions.join(" AND ") : "";
 
     const { rows } = await query(
       `SELECT DISTINCT ON (s.id)
@@ -50,7 +50,7 @@ async function searchServices(req, res, next) {
        ${where}
        ORDER BY s.id, hs.price ASC
        LIMIT $${p} OFFSET $${p + 1}`,
-      [...params, parseInt(limit), offset]
+      [...params, parseInt(limit), offset],
     );
 
     const result = {
@@ -68,7 +68,7 @@ async function searchServices(req, res, next) {
 // GET /api/services/categories
 async function getCategories(req, res, next) {
   try {
-    const cacheKey = 'service:categories';
+    const cacheKey = "service:categories";
     const cached = await cacheGet(cacheKey);
     if (cached) return res.json(cached);
 
@@ -79,7 +79,7 @@ async function getCategories(req, res, next) {
        LEFT JOIN services s ON s.category_id = sc.id
        LEFT JOIN hospital_services hs ON hs.service_id = s.id AND hs.is_available = TRUE
        GROUP BY sc.id
-       ORDER BY sc.name`
+       ORDER BY sc.name`,
     );
 
     await cacheSet(cacheKey, rows, 600);
@@ -92,7 +92,7 @@ async function getCategories(req, res, next) {
 // GET /api/services/trending?city=Ahmedabad
 async function getTrending(req, res, next) {
   try {
-    const { city = 'Ahmedabad', limit = 6 } = req.query;
+    const { city = "Ahmedabad", limit = 6 } = req.query;
     const cacheKey = `trending:${city}:${limit}`;
     const cached = await cacheGet(cacheKey);
     if (cached) return res.json(cached);
@@ -112,7 +112,7 @@ async function getTrending(req, res, next) {
        GROUP BY s.id, sc.name, sc.icon
        ORDER BY booking_count DESC, hospital_count DESC
        LIMIT $2`,
-      [city, parseInt(limit)]
+      [city, parseInt(limit)],
     );
 
     await cacheSet(cacheKey, rows, 300);
@@ -134,7 +134,7 @@ async function autocomplete(req, res, next) {
        JOIN service_categories sc ON sc.id = s.category_id
        WHERE s.name ILIKE $1
        ORDER BY s.name LIMIT 8`,
-      [`${q}%`]
+      [`${q}%`],
     );
     res.json(rows);
   } catch (err) {

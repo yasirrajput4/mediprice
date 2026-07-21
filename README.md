@@ -1,4 +1,7 @@
 <div align="center">
+  <img width="1912" height="862" alt="Screenshot 2026-07-21 212407" src="https://github.com/user-attachments/assets/3a037a0b-d331-4f52-94d8-a82ec45a22cb" />
+</div>
+<div align="center">
 
 # 🏥 MediPrice
 
@@ -70,10 +73,10 @@ mediprice/
 ├── backend/
 │   ├── src/
 │   │   ├── config/
-│   │   │   ├── db.js                    # PostgreSQL pool + query helper
-│   │   │   ├── redis.js                 # Redis client + cache get/set helpers
-│   │   │   ├── elasticsearch.js         # Elasticsearch client + service indexing
-│   │   │   └── migrate.js               # Migration runner script
+│   │   │   ├── db.js                  # PostgreSQL pool + query helper
+│   │   │   ├── redis.js               # Redis client + cache get/set helpers
+│   │   │   ├── elasticsearch.js       # Elasticsearch client + service indexing
+│   │   │   └── migrate.js             # Migration runner script
 │   │   │
 │   │   ├── controllers/
 │   │   │   ├── authController.js        # Register, login, refresh, logout
@@ -113,7 +116,8 @@ mediprice/
 │   │   ├── components/
 │   │   │   ├── common/
 │   │   │   │   ├── Layout.jsx           # Navbar, footer, page wrapper
-│   │   │   │   └── UI.jsx               # StarRating, Badge, PriceTag, Pagination…
+│   │   │   │   ├── UI.jsx               # StarRating, Badge, PriceTag, Pagination…
+│   │   │   │   └── HospitalMap.jsx      # OpenStreetMap integration for single & multi-hospital pins
 │   │   │   └── admin/
 │   │   │       └── AdminLayout.jsx      # Sidebar nav for the admin panel
 │   │   │
@@ -151,9 +155,10 @@ mediprice/
 │   ├── postcss.config.js
 │   └── package.json
 │
-├── docker-compose.yml        # One-command local environment (Postgres, Redis, ES, both apps)
-├── .gitignore                 # Root-level ignore rules (node_modules, .env, etc.)
-└── README.md
+├── docker-compose.yml       # One-command local environment (Postgres, Redis, ES, both apps)
+├── .gitignore               # Root-level ignore rules (node_modules, .env, etc.)
+├── LICENSE                  # MIT License terms and conditions for open-source distribution
+└── README.md                # Project documentation, installation guides, and setup instructions
 ```
 
 ---

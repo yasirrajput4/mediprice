@@ -1,15 +1,15 @@
-const { query } = require('../config/db');
-const { cacheGet, cacheSet } = require('../config/redis');
+const { query } = require("../config/db");
+const { cacheGet, cacheSet } = require("../config/redis");
 
 // GET /api/hospitals — with filters, sorting, pagination
 async function listHospitals(req, res, next) {
   try {
     const {
-      city = 'Ahmedabad',
+      city = "Ahmedabad",
       lat,
       lng,
-      radius = 20,          // km
-      sort = 'distance',    // distance | price | rating | wait
+      radius = 20, // km
+      sort = "distance", // distance | price | rating | wait
       minRating,
       maxPrice,
       minPrice,
@@ -23,12 +23,12 @@ async function listHospitals(req, res, next) {
     const offset = (parseInt(page) - 1) * parseInt(limit);
 
     // Build dynamic query
-    const conditions = ['h.is_active = TRUE'];
+    const conditions = ["h.is_active = TRUE"];
     const params = [];
     let p = 1;
 
     // Location filter
-    let distanceExpr = 'NULL';
+    let distanceExpr = "NULL";
     if (lat && lng) {
       distanceExpr = `(
         6371 * acos(
@@ -90,18 +90,21 @@ async function listHospitals(req, res, next) {
       }
     }
 
-    const where = conditions.join(' AND ');
+    const where = conditions.join(" AND ");
 
     const sortMap = {
-      distance: lat && lng ? `${distanceExpr.replace(/\$\d+/g, (m) => m)} ASC NULLS LAST` : 'h.name ASC',
-      rating: 'hs_stats.avg_rating DESC NULLS LAST',
-      wait: 'hs_stats.avg_wait_min ASC',
+      distance:
+        lat && lng
+          ? `${distanceExpr.replace(/\$\d+/g, (m) => m)} ASC NULLS LAST`
+          : "h.name ASC",
+      rating: "hs_stats.avg_rating DESC NULLS LAST",
+      wait: "hs_stats.avg_wait_min ASC",
       price: service_id
         ? `(SELECT price FROM hospital_services hsp WHERE hsp.hospital_id = h.id AND hsp.service_id = ${parseInt(service_id)}) ASC NULLS LAST`
-        : 'h.name ASC',
+        : "h.name ASC",
     };
 
-    const orderBy = sortMap[sort] || 'h.name ASC';
+    const orderBy = sortMap[sort] || "h.name ASC";
 
     const sql = `
       SELECT
@@ -111,12 +114,16 @@ async function listHospitals(req, res, next) {
         COALESCE(hs_stats.review_count, 0) AS review_count,
         COALESCE(hs_stats.avg_wait_min, 20) AS avg_wait_min,
         COALESCE(hs_stats.fairness_score, 75) AS fairness_score,
-        ${lat && lng ? distanceExpr : 'NULL'} AS distance_km,
-        ${service_id ? `(
+        ${lat && lng ? distanceExpr : "NULL"} AS distance_km,
+        ${
+          service_id
+            ? `(
           SELECT hsv.price FROM hospital_services hsv
           WHERE hsv.hospital_id = h.id AND hsv.service_id = ${parseInt(service_id)}
           LIMIT 1
-        )` : 'NULL'} AS service_price,
+        )`
+            : "NULL"
+        } AS service_price,
         COUNT(*) OVER() AS total_count
       FROM hospitals h
       LEFT JOIN hospital_stats hs_stats ON hs_stats.hospital_id = h.id
@@ -168,9 +175,10 @@ async function getHospital(req, res, next) {
        FROM hospitals h
        LEFT JOIN hospital_stats hs ON hs.hospital_id = h.id
        WHERE h.id = $1 AND h.is_active = TRUE`,
-      [id]
+      [id],
     );
-    if (!rows.length) return res.status(404).json({ error: 'Hospital not found' });
+    if (!rows.length)
+      return res.status(404).json({ error: "Hospital not found" });
 
     await cacheSet(cacheKey, rows[0], 300); // cache 5 min
     res.json(rows[0]);
@@ -205,7 +213,7 @@ async function getHospitalServices(req, res, next) {
       sql += ` AND sc.slug = $2`;
       params.push(category);
     }
-    sql += ' ORDER BY sc.name, s.name';
+    sql += " ORDER BY sc.name, s.name";
 
     const { rows } = await query(sql, params);
     res.json(rows);
@@ -233,7 +241,7 @@ async function getHospitalReviews(req, res, next) {
        WHERE r.hospital_id = $1
        ORDER BY r.created_at DESC
        LIMIT $2 OFFSET $3`,
-      [id, parseInt(limit), offset]
+      [id, parseInt(limit), offset],
     );
     res.json(rows);
   } catch (err) {
@@ -246,9 +254,10 @@ async function getHospitalSlots(req, res, next) {
   try {
     const { id } = req.params;
     const { service_id, date } = req.query;
-    if (!service_id) return res.status(400).json({ error: 'service_id required' });
+    if (!service_id)
+      return res.status(400).json({ error: "service_id required" });
 
-    const targetDate = date || new Date().toISOString().split('T')[0];
+    const targetDate = date || new Date().toISOString().split("T")[0];
 
     const { rows } = await query(
       `SELECT
@@ -262,12 +271,12 @@ async function getHospitalSlots(req, res, next) {
          AND ts.slot_date <= $3::DATE + INTERVAL '6 days'
          AND ts.capacity > ts.booked
        ORDER BY ts.slot_date, ts.slot_time`,
-      [id, service_id, targetDate]
+      [id, service_id, targetDate],
     );
 
     // Group by date
     const grouped = rows.reduce((acc, slot) => {
-      const d = slot.slot_date.toISOString().split('T')[0];
+      const d = slot.slot_date.toISOString().split("T")[0];
       if (!acc[d]) acc[d] = [];
       acc[d].push({
         id: slot.id,

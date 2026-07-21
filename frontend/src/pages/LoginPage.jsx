@@ -1,28 +1,29 @@
-import { useState } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import toast from 'react-hot-toast';
-import { useAuthStore } from '../store/authStore';
-import { Eye, EyeOff } from 'lucide-react';
+import { useState } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import toast from "react-hot-toast";
+import { useAuthStore } from "../store/authStore";
+import { Eye, EyeOff } from "lucide-react";
 
 export function LoginPage() {
-  const [form, setForm] = useState({ email: '', password: '' });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login } = useAuthStore();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = location.state?.from || '/';
+  const from = location.state?.from || "/";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.email || !form.password) return toast.error('All fields required');
+    if (!form.email || !form.password)
+      return toast.error("All fields required");
     setLoading(true);
     try {
       await login(form);
-      toast.success('Welcome back!');
+      toast.success("Welcome back!");
       navigate(from, { replace: true });
     } catch (err) {
-      toast.error(err?.response?.data?.error || 'Login failed');
+      toast.error(err?.response?.data?.error || "Login failed");
     } finally {
       setLoading(false);
     }
@@ -36,12 +37,16 @@ export function LoginPage() {
             <span className="text-white font-bold text-lg">M</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Welcome back</h1>
-          <p className="text-gray-500 text-sm mt-1">Sign in to your MediPrice account</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Sign in to your MediPrice account
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">Email</label>
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+              Email
+            </label>
             <input
               type="email"
               value={form.email}
@@ -52,29 +57,44 @@ export function LoginPage() {
             />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">Password</label>
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+              Password
+            </label>
             <div className="relative">
               <input
-                type={showPass ? 'text' : 'password'}
+                type={showPass ? "text" : "password"}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="••••••••"
                 className="input pr-10"
                 autoComplete="current-password"
               />
-              <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full py-3">
-            {loading ? 'Signing in…' : 'Sign In'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full py-3"
+          >
+            {loading ? "Signing in…" : "Sign In"}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-5">
-          Don't have an account?{' '}
-          <Link to="/register" className="text-blue-600 font-medium hover:underline">Sign up</Link>
+          Don't have an account?{" "}
+          <Link
+            to="/register"
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Sign up
+          </Link>
         </p>
       </div>
     </div>
@@ -82,7 +102,12 @@ export function LoginPage() {
 }
 
 export function RegisterPage() {
-  const [form, setForm] = useState({ name: '', email: '', phone: '', password: '' });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
   const [loading, setLoading] = useState(false);
   const { register } = useAuthStore();
   const navigate = useNavigate();
@@ -90,16 +115,17 @@ export function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.name || !form.password || (!form.email && !form.phone)) {
-      return toast.error('Name, password and email or phone required');
+      return toast.error("Name, password and email or phone required");
     }
-    if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
+    if (form.password.length < 6)
+      return toast.error("Password must be at least 6 characters");
     setLoading(true);
     try {
       await register(form);
-      toast.success('Account created!');
-      navigate('/');
+      toast.success("Account created!");
+      navigate("/");
     } catch (err) {
-      toast.error(err?.response?.data?.error || 'Registration failed');
+      toast.error(err?.response?.data?.error || "Registration failed");
     } finally {
       setLoading(false);
     }
@@ -113,37 +139,81 @@ export function RegisterPage() {
             <span className="text-white font-bold text-lg">M</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Create account</h1>
-          <p className="text-gray-500 text-sm mt-1">Join MediPrice to book and track appointments</p>
+          <p className="text-gray-500 text-sm mt-1">
+            Join MediPrice to book and track appointments
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">Full Name *</label>
-            <input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Your full name" className="input" />
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+              Full Name *
+            </label>
+            <input
+              value={form.name}
+              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              placeholder="Your full name"
+              className="input"
+            />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">Email</label>
-            <input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="you@email.com" className="input" />
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+              Email
+            </label>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              placeholder="you@email.com"
+              className="input"
+            />
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">Mobile (optional)</label>
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+              Mobile (optional)
+            </label>
             <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">+91</span>
-              <input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} placeholder="10-digit number" className="input pl-12" maxLength={10} />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+                +91
+              </span>
+              <input
+                value={form.phone}
+                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                placeholder="10-digit number"
+                className="input pl-12"
+                maxLength={10}
+              />
             </div>
           </div>
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">Password *</label>
-            <input type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} placeholder="Min 6 characters" className="input" />
+            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+              Password *
+            </label>
+            <input
+              type="password"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              placeholder="Min 6 characters"
+              className="input"
+            />
           </div>
-          <button type="submit" disabled={loading} className="btn-primary w-full py-3">
-            {loading ? 'Creating…' : 'Create Account'}
+          <button
+            type="submit"
+            disabled={loading}
+            className="btn-primary w-full py-3"
+          >
+            {loading ? "Creating…" : "Create Account"}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-5">
-          Already have an account?{' '}
-          <Link to="/login" className="text-blue-600 font-medium hover:underline">Sign in</Link>
+          Already have an account?{" "}
+          <Link
+            to="/login"
+            className="text-blue-600 font-medium hover:underline"
+          >
+            Sign in
+          </Link>
         </p>
       </div>
     </div>

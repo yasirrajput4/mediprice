@@ -1,5 +1,5 @@
-const { query, getClient } = require('../config/db');
-const { cacheDelPattern } = require('../config/redis');
+const { query, getClient } = require("../config/db");
+const { cacheDelPattern } = require("../config/redis");
 
 // GET /api/admin/dashboard/:hospitalId
 async function getDashboard(req, res, next) {
@@ -21,7 +21,7 @@ async function getDashboard(req, res, next) {
          LEFT JOIN reviews r ON r.hospital_id = b.hospital_id
          LEFT JOIN hospital_services hs ON hs.hospital_id = b.hospital_id
          WHERE b.hospital_id = $1`,
-        [hospitalId]
+        [hospitalId],
       ),
       query(
         `SELECT
@@ -32,7 +32,7 @@ async function getDashboard(req, res, next) {
          JOIN services s ON s.id = b.service_id
          WHERE b.hospital_id = $1
          ORDER BY b.created_at DESC LIMIT 10`,
-        [hospitalId]
+        [hospitalId],
       ),
       query(
         `SELECT
@@ -48,7 +48,7 @@ async function getDashboard(req, res, next) {
          WHERE hs.hospital_id = $1 AND hs.is_available = TRUE
          GROUP BY s.name, hs.price, hs.wait_time_min
          ORDER BY booking_count DESC LIMIT 5`,
-        [hospitalId]
+        [hospitalId],
       ),
     ]);
 
@@ -78,7 +78,7 @@ async function listServices(req, res, next) {
        JOIN service_categories sc ON sc.id = s.category_id
        WHERE hs.hospital_id = $1
        ORDER BY sc.name, s.name`,
-      [hospitalId]
+      [hospitalId],
     );
     res.json(rows);
   } catch (err) {
@@ -90,7 +90,7 @@ async function listServices(req, res, next) {
 async function updateService(req, res, next) {
   const client = await getClient();
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     const { hospitalId, serviceId } = req.params;
     const { price, discountedPrice, waitTimeMin, isAvailable } = req.body;
@@ -98,18 +98,24 @@ async function updateService(req, res, next) {
     // Get current price for history
     const { rows: current } = await client.query(
       `SELECT id, price FROM hospital_services WHERE hospital_id = $1 AND service_id = $2`,
-      [hospitalId, serviceId]
+      [hospitalId, serviceId],
     );
-    if (!current.length) return res.status(404).json({ error: 'Service not found for this hospital' });
+    if (!current.length)
+      return res
+        .status(404)
+        .json({ error: "Service not found for this hospital" });
 
-    const newPrice = price !== undefined ? Math.round(parseFloat(price) * 100) : current[0].price;
+    const newPrice =
+      price !== undefined
+        ? Math.round(parseFloat(price) * 100)
+        : current[0].price;
 
     // Record price history if price changed
     if (price !== undefined && newPrice !== current[0].price) {
       await client.query(
         `INSERT INTO price_history (hospital_service_id, old_price, new_price, changed_by)
          VALUES ($1, $2, $3, $4)`,
-        [current[0].id, current[0].price, newPrice, req.user.id]
+        [current[0].id, current[0].price, newPrice, req.user.id],
       );
     }
 
@@ -125,24 +131,28 @@ async function updateService(req, res, next) {
        RETURNING *, price / 100.0 AS price_inr`,
       [
         newPrice,
-        discountedPrice !== undefined ? Math.round(parseFloat(discountedPrice) * 100) : null,
+        discountedPrice !== undefined
+          ? Math.round(parseFloat(discountedPrice) * 100)
+          : null,
         waitTimeMin || null,
         isAvailable !== undefined ? isAvailable : null,
         req.user.id,
         hospitalId,
         serviceId,
-      ]
+      ],
     );
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
     await cacheDelPattern(`hospital:${hospitalId}*`);
 
     // Refresh stats async
-    query('REFRESH MATERIALIZED VIEW CONCURRENTLY hospital_stats').catch(() => {});
+    query("REFRESH MATERIALIZED VIEW CONCURRENTLY hospital_stats").catch(
+      () => {},
+    );
 
     res.json(rows[0]);
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     next(err);
   } finally {
     client.release();
@@ -155,13 +165,19 @@ async function addService(req, res, next) {
     const { hospitalId } = req.params;
     const { serviceId, price, waitTimeMin } = req.body;
 
-    if (!serviceId || !price) return res.status(400).json({ error: 'serviceId and price required' });
+    if (!serviceId || !price)
+      return res.status(400).json({ error: "serviceId and price required" });
 
     const { rows } = await query(
       `INSERT INTO hospital_services (hospital_id, service_id, price, wait_time_min)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [hospitalId, serviceId, Math.round(parseFloat(price) * 100), waitTimeMin || 20]
+      [
+        hospitalId,
+        serviceId,
+        Math.round(parseFloat(price) * 100),
+        waitTimeMin || 20,
+      ],
     );
     res.status(201).json(rows[0]);
   } catch (err) {
@@ -178,12 +194,20 @@ async function listBookings(req, res, next) {
 
     const params = [hospitalId];
     let p = 2;
-    const conditions = ['b.hospital_id = $1'];
+    const conditions = ["b.hospital_id = $1"];
 
-    if (date) { conditions.push(`b.slot_date = $${p}`); params.push(date); p++; }
-    if (status) { conditions.push(`b.status = $${p}`); params.push(status); p++; }
+    if (date) {
+      conditions.push(`b.slot_date = $${p}`);
+      params.push(date);
+      p++;
+    }
+    if (status) {
+      conditions.push(`b.status = $${p}`);
+      params.push(status);
+      p++;
+    }
 
-    const where = conditions.join(' AND ');
+    const where = conditions.join(" AND ");
     const { rows } = await query(
       `SELECT
          b.uuid, b.patient_name, b.patient_phone, b.slot_date, b.slot_time,
@@ -197,13 +221,17 @@ async function listBookings(req, res, next) {
        WHERE ${where}
        ORDER BY b.slot_date DESC, b.slot_time
        LIMIT $${p} OFFSET $${p + 1}`,
-      [...params, parseInt(limit), offset]
+      [...params, parseInt(limit), offset],
     );
 
     const total = rows[0]?.total_count || 0;
     res.json({
       bookings: rows.map(({ total_count, ...b }) => b),
-      pagination: { page: parseInt(page), limit: parseInt(limit), total: parseInt(total) },
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: parseInt(total),
+      },
     });
   } catch (err) {
     next(err);
@@ -216,18 +244,21 @@ async function updateBookingStatus(req, res, next) {
     const { hospitalId, bookingId } = req.params;
     const { status } = req.body;
 
-    const validStatuses = ['confirmed', 'completed', 'cancelled', 'no_show'];
+    const validStatuses = ["confirmed", "completed", "cancelled", "no_show"];
     if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: `Status must be one of: ${validStatuses.join(', ')}` });
+      return res
+        .status(400)
+        .json({ error: `Status must be one of: ${validStatuses.join(", ")}` });
     }
 
     const { rows } = await query(
       `UPDATE bookings SET status = $1
        WHERE uuid = $2 AND hospital_id = $3
        RETURNING uuid, status, patient_name`,
-      [status, bookingId, hospitalId]
+      [status, bookingId, hospitalId],
     );
-    if (!rows.length) return res.status(404).json({ error: 'Booking not found' });
+    if (!rows.length)
+      return res.status(404).json({ error: "Booking not found" });
 
     res.json(rows[0]);
   } catch (err) {

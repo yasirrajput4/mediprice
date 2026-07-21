@@ -1,4 +1,4 @@
-const logger = require('../utils/logger');
+const logger = require("../utils/logger");
 
 function notFound(req, res, next) {
   const error = new Error(`Route not found: ${req.method} ${req.originalUrl}`);
@@ -17,18 +17,20 @@ function errorHandler(err, req, res, next) {
   }
 
   // Postgres unique violation
-  if (err.code === '23505') {
-    return res.status(409).json({ error: 'A record with this value already exists.' });
+  if (err.code === "23505") {
+    return res
+      .status(409)
+      .json({ error: "A record with this value already exists." });
   }
 
   // Postgres foreign key violation
-  if (err.code === '23503') {
-    return res.status(400).json({ error: 'Referenced record does not exist.' });
+  if (err.code === "23503") {
+    return res.status(400).json({ error: "Referenced record does not exist." });
   }
 
   res.status(status).json({
-    error: status < 500 ? err.message : 'Internal server error',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    error: status < 500 ? err.message : "Internal server error",
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   });
 }
 

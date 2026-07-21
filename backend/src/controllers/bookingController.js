@@ -1,13 +1,13 @@
-const { query, getClient } = require('../config/db');
-const { cacheDelPattern } = require('../config/redis');
+const { query, getClient } = require("../config/db");
+const { cacheDelPattern } = require("../config/redis");
 
-const PLATFORM_FEE = parseInt(process.env.PLATFORM_FEE || '4900'); // paise
+const PLATFORM_FEE = parseInt(process.env.PLATFORM_FEE || "4900"); // paise
 
 // POST /api/bookings
 async function createBooking(req, res, next) {
   const client = await getClient();
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     const {
       hospitalId,
@@ -17,23 +17,32 @@ async function createBooking(req, res, next) {
       slotTime,
       patientName,
       patientPhone,
-      patientRelation = 'self',
+      patientRelation = "self",
       notes,
     } = req.body;
 
     // Validate required fields
-    if (!hospitalId || !serviceId || !slotDate || !slotTime || !patientName || !patientPhone) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    if (
+      !hospitalId ||
+      !serviceId ||
+      !slotDate ||
+      !slotTime ||
+      !patientName ||
+      !patientPhone
+    ) {
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Get service price
     const { rows: priceRows } = await client.query(
       `SELECT price FROM hospital_services
        WHERE hospital_id = $1 AND service_id = $2 AND is_available = TRUE`,
-      [hospitalId, serviceId]
+      [hospitalId, serviceId],
     );
     if (!priceRows.length) {
-      return res.status(404).json({ error: 'Service not available at this hospital' });
+      return res
+        .status(404)
+        .json({ error: "Service not available at this hospital" });
     }
     const servicePrice = priceRows[0].price;
 
@@ -43,18 +52,18 @@ async function createBooking(req, res, next) {
         `SELECT id, capacity, booked FROM time_slots
          WHERE id = $1 AND hospital_id = $2 AND service_id = $3
          FOR UPDATE`,
-        [timeSlotId, hospitalId, serviceId]
+        [timeSlotId, hospitalId, serviceId],
       );
       if (!slotRows.length) {
-        return res.status(404).json({ error: 'Time slot not found' });
+        return res.status(404).json({ error: "Time slot not found" });
       }
       const slot = slotRows[0];
       if (slot.booked >= slot.capacity) {
-        return res.status(409).json({ error: 'Time slot is fully booked' });
+        return res.status(409).json({ error: "Time slot is fully booked" });
       }
       await client.query(
-        'UPDATE time_slots SET booked = booked + 1 WHERE id = $1',
-        [timeSlotId]
+        "UPDATE time_slots SET booked = booked + 1 WHERE id = $1",
+        [timeSlotId],
       );
     }
 
@@ -68,15 +77,22 @@ async function createBooking(req, res, next) {
        RETURNING *`,
       [
         req.user?.id || null,
-        hospitalId, serviceId, timeSlotId || null,
-        patientName, patientPhone, patientRelation,
-        slotDate, slotTime,
-        servicePrice, PLATFORM_FEE, totalAmount,
+        hospitalId,
+        serviceId,
+        timeSlotId || null,
+        patientName,
+        patientPhone,
+        patientRelation,
+        slotDate,
+        slotTime,
+        servicePrice,
+        PLATFORM_FEE,
+        totalAmount,
         notes || null,
-      ]
+      ],
     );
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
 
     const booking = bookingRows[0];
     // Convert paise → ₹ for response
@@ -86,7 +102,7 @@ async function createBooking(req, res, next) {
 
     res.status(201).json(booking);
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     next(err);
   } finally {
     client.release();
@@ -112,14 +128,19 @@ async function getBooking(req, res, next) {
        JOIN services s ON s.id = b.service_id
        LEFT JOIN payments p ON p.booking_id = b.id
        WHERE b.uuid = $1`,
-      [id]
+      [id],
     );
-    if (!rows.length) return res.status(404).json({ error: 'Booking not found' });
+    if (!rows.length)
+      return res.status(404).json({ error: "Booking not found" });
 
     const booking = rows[0];
     // Only owner or hospital admin can view
-    if (req.user && booking.user_id !== req.user.id && req.user.role === 'patient') {
-      return res.status(403).json({ error: 'Not authorized' });
+    if (
+      req.user &&
+      booking.user_id !== req.user.id &&
+      req.user.role === "patient"
+    ) {
+      return res.status(403).json({ error: "Not authorized" });
     }
 
     res.json(booking);
@@ -170,7 +191,7 @@ async function listUserBookings(req, res, next) {
 async function cancelBooking(req, res, next) {
   const client = await getClient();
   try {
-    await client.query('BEGIN');
+    await client.query("BEGIN");
 
     const { id } = req.params;
     const { rows } = await client.query(
@@ -178,36 +199,39 @@ async function cancelBooking(req, res, next) {
        FROM bookings b
        LEFT JOIN payments p ON p.booking_id = b.id
        WHERE b.uuid = $1 FOR UPDATE`,
-      [id]
+      [id],
     );
-    if (!rows.length) return res.status(404).json({ error: 'Booking not found' });
+    if (!rows.length)
+      return res.status(404).json({ error: "Booking not found" });
 
     const booking = rows[0];
-    if (booking.status === 'cancelled') {
-      return res.status(400).json({ error: 'Booking is already cancelled' });
+    if (booking.status === "cancelled") {
+      return res.status(400).json({ error: "Booking is already cancelled" });
     }
-    if (booking.status === 'completed') {
-      return res.status(400).json({ error: 'Cannot cancel a completed booking' });
+    if (booking.status === "completed") {
+      return res
+        .status(400)
+        .json({ error: "Cannot cancel a completed booking" });
     }
 
-    await client.query(
-      'UPDATE bookings SET status = $1 WHERE id = $2',
-      ['cancelled', booking.id]
-    );
+    await client.query("UPDATE bookings SET status = $1 WHERE id = $2", [
+      "cancelled",
+      booking.id,
+    ]);
 
     if (booking.time_slot_id) {
       await client.query(
-        'UPDATE time_slots SET booked = GREATEST(0, booked - 1) WHERE id = $1',
-        [booking.time_slot_id]
+        "UPDATE time_slots SET booked = GREATEST(0, booked - 1) WHERE id = $1",
+        [booking.time_slot_id],
       );
     }
 
-    await client.query('COMMIT');
+    await client.query("COMMIT");
 
     await cacheDelPattern(`hospital:${booking.hospital_id}*`);
-    res.json({ message: 'Booking cancelled successfully' });
+    res.json({ message: "Booking cancelled successfully" });
   } catch (err) {
-    await client.query('ROLLBACK');
+    await client.query("ROLLBACK");
     next(err);
   } finally {
     client.release();
@@ -221,29 +245,40 @@ async function submitReview(req, res, next) {
     const { rating, reviewText } = req.body;
 
     if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+      return res.status(400).json({ error: "Rating must be between 1 and 5" });
     }
 
     const { rows: bookingRows } = await query(
       `SELECT id, hospital_id, user_id, status FROM bookings WHERE uuid = $1`,
-      [id]
+      [id],
     );
-    if (!bookingRows.length) return res.status(404).json({ error: 'Booking not found' });
+    if (!bookingRows.length)
+      return res.status(404).json({ error: "Booking not found" });
 
     const booking = bookingRows[0];
-    if (booking.status !== 'completed') {
-      return res.status(400).json({ error: 'Can only review completed bookings' });
+    if (booking.status !== "completed") {
+      return res
+        .status(400)
+        .json({ error: "Can only review completed bookings" });
     }
 
     const { rows } = await query(
       `INSERT INTO reviews (booking_id, user_id, hospital_id, rating, review_text)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [booking.id, req.user.id, booking.hospital_id, rating, reviewText || null]
+      [
+        booking.id,
+        req.user.id,
+        booking.hospital_id,
+        rating,
+        reviewText || null,
+      ],
     );
 
     // Refresh materialized view (async)
-    query('REFRESH MATERIALIZED VIEW CONCURRENTLY hospital_stats').catch(() => {});
+    query("REFRESH MATERIALIZED VIEW CONCURRENTLY hospital_stats").catch(
+      () => {},
+    );
     await cacheDelPattern(`hospital:${booking.hospital_id}*`);
 
     res.status(201).json(rows[0]);
@@ -252,4 +287,10 @@ async function submitReview(req, res, next) {
   }
 }
 
-module.exports = { createBooking, getBooking, listUserBookings, cancelBooking, submitReview };
+module.exports = {
+  createBooking,
+  getBooking,
+  listUserBookings,
+  cancelBooking,
+  submitReview,
+};

@@ -1,6 +1,6 @@
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
-const { query } = require('../config/db');
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+const { query } = require("../config/db");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -11,7 +11,8 @@ const razorpay = new Razorpay({
 async function createOrder(req, res, next) {
   try {
     const { bookingId } = req.body;
-    if (!bookingId) return res.status(400).json({ error: 'bookingId required' });
+    if (!bookingId)
+      return res.status(400).json({ error: "bookingId required" });
 
     const { rows } = await query(
       `SELECT b.id, b.uuid, b.total_amount, b.status, h.name AS hospital_name, s.name AS service_name
@@ -19,19 +20,20 @@ async function createOrder(req, res, next) {
        JOIN hospitals h ON h.id = b.hospital_id
        JOIN services s ON s.id = b.service_id
        WHERE b.uuid = $1`,
-      [bookingId]
+      [bookingId],
     );
-    if (!rows.length) return res.status(404).json({ error: 'Booking not found' });
+    if (!rows.length)
+      return res.status(404).json({ error: "Booking not found" });
 
     const booking = rows[0];
-    if (booking.status !== 'pending') {
-      return res.status(400).json({ error: 'Booking is not in pending state' });
+    if (booking.status !== "pending") {
+      return res.status(400).json({ error: "Booking is not in pending state" });
     }
 
     // Check for existing payment
     const { rows: existingPayment } = await query(
       `SELECT razorpay_order_id FROM payments WHERE booking_id = $1 AND status = 'created'`,
-      [booking.id]
+      [booking.id],
     );
     if (existingPayment.length && existingPayment[0].razorpay_order_id) {
       return res.json({ orderId: existingPayment[0].razorpay_order_id });
@@ -40,7 +42,7 @@ async function createOrder(req, res, next) {
     // Create Razorpay order (amount in paise)
     const order = await razorpay.orders.create({
       amount: booking.total_amount, // already in paise
-      currency: 'INR',
+      currency: "INR",
       receipt: `booking_${booking.uuid}`,
       notes: {
         bookingId: booking.uuid,
@@ -54,7 +56,7 @@ async function createOrder(req, res, next) {
       `INSERT INTO payments (booking_id, razorpay_order_id, amount, status)
        VALUES ($1, $2, $3, 'created')
        ON CONFLICT (razorpay_order_id) DO NOTHING`,
-      [booking.id, order.id, booking.total_amount]
+      [booking.id, order.id, booking.total_amount],
     );
 
     res.json({
@@ -71,20 +73,28 @@ async function createOrder(req, res, next) {
 // POST /api/payments/verify
 async function verifyPayment(req, res, next) {
   try {
-    const { razorpayOrderId, razorpayPaymentId, razorpaySignature, bookingId, method } = req.body;
+    const {
+      razorpayOrderId,
+      razorpayPaymentId,
+      razorpaySignature,
+      bookingId,
+      method,
+    } = req.body;
 
     if (!razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-      return res.status(400).json({ error: 'Payment details required' });
+      return res.status(400).json({ error: "Payment details required" });
     }
 
     // Verify HMAC signature
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-      .digest('hex');
+      .digest("hex");
 
     if (expectedSignature !== razorpaySignature) {
-      return res.status(400).json({ error: 'Payment verification failed — invalid signature' });
+      return res
+        .status(400)
+        .json({ error: "Payment verification failed — invalid signature" });
     }
 
     // Fetch payment details from Razorpay
@@ -99,7 +109,12 @@ async function verifyPayment(req, res, next) {
          method = $3,
          paid_at = NOW()
        WHERE razorpay_order_id = $4`,
-      [razorpayPaymentId, razorpaySignature, payment.method || method || 'unknown', razorpayOrderId]
+      [
+        razorpayPaymentId,
+        razorpaySignature,
+        payment.method || method || "unknown",
+        razorpayOrderId,
+      ],
     );
 
     // Confirm booking
@@ -107,7 +122,7 @@ async function verifyPayment(req, res, next) {
       `UPDATE bookings SET status = 'confirmed'
        WHERE uuid = $1 AND status = 'pending'
        RETURNING uuid, patient_name, slot_date, slot_time, total_amount / 100.0 AS total_amount`,
-      [bookingId]
+      [bookingId],
     );
 
     res.json({
@@ -125,34 +140,34 @@ async function handleWebhook(req, res, next) {
   try {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     if (webhookSecret) {
-      const signature = req.headers['x-razorpay-signature'];
+      const signature = req.headers["x-razorpay-signature"];
       const body = JSON.stringify(req.body);
       const expected = crypto
-        .createHmac('sha256', webhookSecret)
+        .createHmac("sha256", webhookSecret)
         .update(body)
-        .digest('hex');
+        .digest("hex");
 
       if (expected !== signature) {
-        return res.status(400).json({ error: 'Invalid webhook signature' });
+        return res.status(400).json({ error: "Invalid webhook signature" });
       }
     }
 
     const { event, payload } = req.body;
 
-    if (event === 'payment.captured') {
+    if (event === "payment.captured") {
       const payment = payload.payment.entity;
       await query(
         `UPDATE payments SET status = 'paid', paid_at = NOW()
          WHERE razorpay_order_id = $1`,
-        [payment.order_id]
+        [payment.order_id],
       );
     }
 
-    if (event === 'payment.failed') {
+    if (event === "payment.failed") {
       const payment = payload.payment.entity;
       await query(
         `UPDATE payments SET status = 'failed' WHERE razorpay_order_id = $1`,
-        [payment.order_id]
+        [payment.order_id],
       );
     }
 

@@ -1,12 +1,12 @@
-require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
-const { Pool } = require('pg');
+require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
+const { Pool } = require("pg");
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 async function migrate() {
-  const migrationsDir = path.join(__dirname, '../../migrations');
+  const migrationsDir = path.join(__dirname, "../../migrations");
   const files = fs.readdirSync(migrationsDir).sort();
 
   // Create migrations tracking table
@@ -19,10 +19,11 @@ async function migrate() {
   `);
 
   for (const file of files) {
-    if (!file.endsWith('.sql')) continue;
+    if (!file.endsWith(".sql")) continue;
 
     const { rows } = await pool.query(
-      'SELECT id FROM _migrations WHERE filename = $1', [file]
+      "SELECT id FROM _migrations WHERE filename = $1",
+      [file],
     );
     if (rows.length > 0) {
       console.log(`⏭  Skipping (already run): ${file}`);
@@ -30,17 +31,17 @@ async function migrate() {
     }
 
     console.log(`⚡ Running migration: ${file}`);
-    const sql = fs.readFileSync(path.join(migrationsDir, file), 'utf8');
+    const sql = fs.readFileSync(path.join(migrationsDir, file), "utf8");
     await pool.query(sql);
-    await pool.query('INSERT INTO _migrations (filename) VALUES ($1)', [file]);
+    await pool.query("INSERT INTO _migrations (filename) VALUES ($1)", [file]);
     console.log(`✅ Done: ${file}`);
   }
 
   await pool.end();
-  console.log('\n✅ All migrations complete.');
+  console.log("\n✅ All migrations complete.");
 }
 
 migrate().catch((err) => {
-  console.error('Migration failed:', err);
+  console.error("Migration failed:", err);
   process.exit(1);
 });

@@ -1,6 +1,13 @@
-import { paymentsApi } from './apiServices';
+import { paymentsApi } from "./apiServices";
 
-export async function initiateRazorpayPayment({ bookingId, bookingUuid, userPhone, userName, onSuccess, onFailure }) {
+export async function initiateRazorpayPayment({
+  bookingId,
+  bookingUuid,
+  userPhone,
+  userName,
+  onSuccess,
+  onFailure,
+}) {
   // 1. Create Razorpay order on backend
   const order = await paymentsApi.createOrder(bookingUuid);
 
@@ -8,17 +15,17 @@ export async function initiateRazorpayPayment({ bookingId, bookingUuid, userPhon
     const options = {
       key: order.keyId || import.meta.env.VITE_RAZORPAY_KEY,
       amount: order.amount,
-      currency: order.currency || 'INR',
-      name: 'MediPrice',
-      description: 'Hospital Service Booking',
-      image: '/logo.svg',
+      currency: order.currency || "INR",
+      name: "MediPrice",
+      description: "Hospital Service Booking",
+      image: "/logo.svg",
       order_id: order.orderId,
       prefill: {
-        name: userName || '',
-        contact: userPhone || '',
+        name: userName || "",
+        contact: userPhone || "",
       },
-      theme: { color: '#2563EB' },
-      modal: { ondismiss: () => reject(new Error('Payment dismissed')) },
+      theme: { color: "#2563EB" },
+      modal: { ondismiss: () => reject(new Error("Payment dismissed")) },
       handler: async (response) => {
         try {
           const result = await paymentsApi.verify({
@@ -37,12 +44,12 @@ export async function initiateRazorpayPayment({ bookingId, bookingUuid, userPhon
     };
 
     if (!window.Razorpay) {
-      reject(new Error('Razorpay SDK not loaded'));
+      reject(new Error("Razorpay SDK not loaded"));
       return;
     }
 
     const rzp = new window.Razorpay(options);
-    rzp.on('payment.failed', (response) => {
+    rzp.on("payment.failed", (response) => {
       onFailure?.(response.error);
       reject(new Error(response.error.description));
     });

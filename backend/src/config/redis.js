@@ -1,5 +1,5 @@
-const Redis = require('ioredis');
-const logger = require('../utils/logger');
+const Redis = require("ioredis");
+const logger = require("../utils/logger");
 
 let redis;
 
@@ -9,14 +9,14 @@ async function connectRedis() {
     retryStrategy: (times) => Math.min(times * 50, 2000),
   });
 
-  redis.on('error', (err) => logger.error('Redis error:', err));
-  redis.on('connect', () => logger.info('Redis connected'));
+  redis.on("error", (err) => logger.error("Redis error:", err));
+  redis.on("connect", () => logger.info("Redis connected"));
 
   await redis.ping();
 }
 
 function getRedis() {
-  if (!redis) throw new Error('Redis not initialized');
+  if (!redis) throw new Error("Redis not initialized");
   return redis;
 }
 
@@ -39,4 +39,11 @@ async function cacheDelPattern(pattern) {
   if (keys.length > 0) await getRedis().del(...keys);
 }
 
-module.exports = { connectRedis, getRedis, cacheGet, cacheSet, cacheDel, cacheDelPattern };
+module.exports = {
+  connectRedis,
+  getRedis,
+  cacheGet,
+  cacheSet,
+  cacheDel,
+  cacheDelPattern,
+};
