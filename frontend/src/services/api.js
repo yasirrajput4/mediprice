@@ -13,9 +13,13 @@ api.interceptors.request.use((config) => {
   // Import store inline to avoid circular deps
   const raw = localStorage.getItem(AUTH_STORAGE_KEY);
   if (raw) {
-    const { state } = JSON.parse(raw);
-    if (state?.accessToken) {
-      config.headers.Authorization = `Bearer ${state.accessToken}`;
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === "object" && parsed.state?.accessToken) {
+        config.headers.Authorization = `Bearer ${parsed.state.accessToken}`;
+      }
+    } catch (e) {
+      // Ignore JSON parse errors for corrupted storage
     }
   }
   return config;
@@ -44,7 +48,16 @@ api.interceptors.response.use(
 
       try {
         const raw = localStorage.getItem(AUTH_STORAGE_KEY);
-        const { state } = JSON.parse(raw || "{}");
+        let state = {};
+        try {
+          const parsed = JSON.parse(raw || "{}");
+          if (parsed && typeof parsed === "object") {
+            state = parsed.state || {};
+          }
+        } catch (e) {
+          state = {};
+        }
+
         const { data } = await axios.post(
           `${api.defaults.baseURL}/auth/refresh`,
           { refreshToken: state?.refreshToken },
