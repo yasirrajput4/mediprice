@@ -1,17 +1,32 @@
+import React, { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from "recharts";
 import { TrendingUp, Calendar, Star, Clock, IndianRupee } from "lucide-react";
 import { adminApi } from "../../services/apiServices";
 import { LoadingSpinner, StarRating, Badge } from "../../components/common/UI";
 import { useAuthStore } from "../../store/authStore";
+
+// Lazy load Recharts components to prevent heavy upfront loading
+const ResponsiveContainer = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.ResponsiveContainer })),
+);
+const BarChart = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.BarChart })),
+);
+const Bar = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.Bar })),
+);
+const XAxis = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.XAxis })),
+);
+const YAxis = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.YAxis })),
+);
+const Tooltip = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.Tooltip })),
+);
+const CartesianGrid = React.lazy(() =>
+  import("recharts").then((mod) => ({ default: mod.CartesianGrid })),
+);
 
 // Hard-coded hospital id from auth — in production, store this in user profile
 const HOSPITAL_ID = 1;
@@ -102,31 +117,39 @@ export default function AdminDashboardPage() {
             Top Services This Month
           </h2>
           {topServices?.length ? (
-            <ResponsiveContainer width="100%" height={200}>
-              <BarChart
-                data={topServices}
-                layout="vertical"
-                margin={{ left: 20 }}
-              >
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11 }} />
-                <YAxis
-                  dataKey="service_name"
-                  type="category"
-                  tick={{ fontSize: 11 }}
-                  width={100}
-                />
-                <Tooltip
-                  formatter={(v) => [v, "Bookings"]}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                />
-                <Bar
-                  dataKey="booking_count"
-                  fill="#2563eb"
-                  radius={[0, 4, 4, 0]}
-                />
-              </BarChart>
-            </ResponsiveContainer>
+            <React.Suspense
+              fallback={
+                <div className="h-[200px] flex items-center justify-center text-sm text-gray-400">
+                  Loading chart...
+                </div>
+              }
+            >
+              <ResponsiveContainer width="100%" height={200}>
+                <BarChart
+                  data={topServices}
+                  layout="vertical"
+                  margin={{ left: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                  <XAxis type="number" tick={{ fontSize: 11 }} />
+                  <YAxis
+                    dataKey="service_name"
+                    type="category"
+                    tick={{ fontSize: 11 }}
+                    width={100}
+                  />
+                  <Tooltip
+                    formatter={(v) => [v, "Bookings"]}
+                    contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                  />
+                  <Bar
+                    dataKey="booking_count"
+                    fill="#2563eb"
+                    radius={[0, 4, 4, 0]}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </React.Suspense>
           ) : (
             <p className="text-sm text-gray-400 text-center py-12">
               No bookings yet
