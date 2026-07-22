@@ -9,9 +9,11 @@ import {
   TrendingUp,
   ArrowRight,
   Star,
+  HelpCircle,
 } from "lucide-react";
 import { servicesApi } from "../services/apiServices";
 import { LoadingSpinner } from "../components/common/UI";
+import { useOnboardingTour, resetTour } from "../hooks/useOnboardingTour";
 
 const POPULAR_SEARCHES = [
   "X-Ray",
@@ -26,6 +28,9 @@ export default function HomePage() {
   const [q, setQ] = useState("");
   const [city, setCity] = useState("Ahmedabad");
   const navigate = useNavigate();
+
+  // Start tour automatically on first visit
+  useOnboardingTour();
 
   const { data: categories = [] } = useQuery({
     queryKey: ["categories"],
@@ -63,7 +68,7 @@ export default function HomePage() {
             verified hospitals near you.
           </p>
 
-          {/* Search form */}
+          {/* Search form — IDs for onboarding tour */}
           <form
             onSubmit={handleSearch}
             className="bg-white rounded-2xl p-2 flex flex-col md:flex-row gap-2 shadow-2xl"
@@ -71,22 +76,27 @@ export default function HomePage() {
             <div className="flex-1 flex items-center gap-2 px-3">
               <Search size={18} className="text-gray-400 flex-shrink-0" />
               <input
+                id="search-input"
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search service — MRI, CBC, X-Ray…"
+                aria-label="Search for a hospital service"
                 className="flex-1 py-2.5 text-gray-900 placeholder:text-gray-400 bg-transparent focus:outline-none text-sm"
               />
             </div>
             <div className="flex items-center gap-2 px-3 border-t md:border-t-0 md:border-l border-gray-100">
               <MapPin size={18} className="text-gray-400 flex-shrink-0" />
               <input
+                id="city-input"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
                 placeholder="City"
+                aria-label="Enter your city"
                 className="w-32 py-2.5 text-gray-900 placeholder:text-gray-400 bg-transparent focus:outline-none text-sm"
               />
             </div>
             <button
+              id="search-btn"
               type="submit"
               className="btn-primary whitespace-nowrap py-3 px-6"
             >
@@ -94,12 +104,15 @@ export default function HomePage() {
             </button>
           </form>
 
-          {/* Popular */}
-          <div className="flex flex-wrap justify-center gap-2 mt-5">
+          {/* Popular searches */}
+          <div
+            id="popular-searches"
+            className="flex flex-wrap justify-center gap-2 mt-5"
+          >
             {POPULAR_SEARCHES.map((s) => (
               <button
-                type="button"
                 key={s}
+                type="button"
                 onClick={() => navigate(`/search?q=${s}&city=${city}`)}
                 className="px-3 py-1.5 bg-white/20 hover:bg-white/30 rounded-full text-sm backdrop-blur-sm transition-colors"
               >
@@ -144,10 +157,10 @@ export default function HomePage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {categories.map((cat) => (
             <button
-              type="button"
               key={cat.id}
+              type="button"
               onClick={() => navigate(`/search?category=${cat.slug}`)}
-              className="card flex flex-col items-center gap-2 py-5 hover:border-blue-200 hover:shadow-md transition-all group text-center"
+              className="card flex flex-col items-center gap-2 py-5 hover:border-blue-200 hover:shadow-md transition-colors group text-center"
             >
               <span className="text-3xl">{cat.icon}</span>
               <span className="text-sm font-medium text-gray-800 group-hover:text-blue-700 transition-colors">
@@ -162,7 +175,7 @@ export default function HomePage() {
       </section>
 
       {/* Trending */}
-      <section className="bg-gray-50 py-12">
+      <section id="trending-section" className="bg-gray-50 py-12">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp size={20} className="text-blue-600" />
@@ -176,10 +189,10 @@ export default function HomePage() {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {trending.map((svc) => (
                 <button
-                  type="button"
                   key={svc.id}
+                  type="button"
                   onClick={() => navigate(`/search?q=${svc.name}&city=${city}`)}
-                  className="card flex items-start gap-3 hover:shadow-md transition-all group text-left"
+                  className="card flex items-start gap-3 hover:shadow-md transition-colors group text-left"
                 >
                   <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-xl">
                     {svc.category_icon}
@@ -214,9 +227,23 @@ export default function HomePage() {
 
       {/* How it works */}
       <section className="max-w-7xl mx-auto px-4 py-16">
-        <h2 className="text-xl font-bold text-gray-900 text-center mb-10">
-          How MediPrice Works
-        </h2>
+        <div className="flex items-center justify-between mb-10">
+          <h2 className="text-xl font-bold text-gray-900 text-center flex-1">
+            How MediPrice Works
+          </h2>
+          {/* Restart tour button */}
+          <button
+            type="button"
+            onClick={() => {
+              resetTour();
+              window.location.reload();
+            }}
+            className="flex items-center gap-1.5 text-xs text-gray-400 hover:text-blue-600 transition-colors"
+            aria-label="Restart guided tour"
+          >
+            <HelpCircle size={15} /> Tour
+          </button>
+        </div>
         <div className="grid md:grid-cols-3 gap-8">
           {[
             {
