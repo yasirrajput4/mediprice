@@ -6,18 +6,6 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-// ── Constants (Moved outside components for performance) ─────────────────────
-const BADGE_COLORS = {
-  blue: "bg-blue-50 text-blue-700",
-  green: "bg-emerald-50 text-emerald-700",
-  amber: "bg-amber-50 text-amber-700",
-  red: "bg-red-50 text-red-700",
-  purple: "bg-purple-50 text-purple-700",
-  gray: "bg-gray-100 text-gray-600",
-};
-
-const SIZE_MAP = { sm: "text-base", md: "text-xl", lg: "text-2xl" };
-
 // ── StarRating ────────────────────────────────────────────────────────────────
 export function StarRating({
   rating = 0,
@@ -83,11 +71,13 @@ export function Pagination({ page, pages, onChange }) {
   if (pages <= 1) return null;
   return (
     <div className="flex items-center justify-center gap-2 mt-8">
+      {/* ✅ Fix: aria-label added (control-has-associated-label) */}
       <button
         type="button"
         onClick={() => onChange(page - 1)}
         disabled={page <= 1}
-        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        aria-label="Previous page"
+        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronLeft size={16} />
       </button>
@@ -95,10 +85,12 @@ export function Pagination({ page, pages, onChange }) {
         const p = i + 1;
         return (
           <button
-            type="button"
             key={p}
+            type="button"
             onClick={() => onChange(p)}
-            className={`w-9 h-9 rounded-lg text-sm font-medium transition ${
+            aria-label={`Page ${p}`}
+            aria-current={p === page ? "page" : undefined}
+            className={`w-9 h-9 rounded-lg text-sm font-medium transition-colors ${
               p === page
                 ? "bg-blue-600 text-white"
                 : "border border-gray-200 hover:bg-gray-50 text-gray-700"
@@ -108,11 +100,13 @@ export function Pagination({ page, pages, onChange }) {
           </button>
         );
       })}
+      {/* ✅ Fix: aria-label added (control-has-associated-label) */}
       <button
         type="button"
         onClick={() => onChange(page + 1)}
         disabled={page >= pages}
-        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition"
+        aria-label="Next page"
+        className="p-2 rounded-lg border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
       >
         <ChevronRight size={16} />
       </button>
@@ -122,18 +116,25 @@ export function Pagination({ page, pages, onChange }) {
 
 // ── Badge ─────────────────────────────────────────────────────────────────────
 export function Badge({ children, color = "blue" }) {
+  const colors = {
+    blue: "bg-blue-50 text-blue-700",
+    green: "bg-emerald-50 text-emerald-700",
+    amber: "bg-amber-50 text-amber-700",
+    red: "bg-red-50 text-red-700",
+    purple: "bg-purple-50 text-purple-700",
+    gray: "bg-gray-100 text-gray-600",
+  };
   return (
-    <span className={`badge ${BADGE_COLORS[color] || BADGE_COLORS.blue}`}>
-      {children}
-    </span>
+    <span className={`badge ${colors[color] || colors.blue}`}>{children}</span>
   );
 }
 
 // ── PriceTag ──────────────────────────────────────────────────────────────────
 export function PriceTag({ price, discountedPrice, size = "md" }) {
+  const sizeMap = { sm: "text-base", md: "text-xl", lg: "text-2xl" };
   return (
     <span className="flex items-baseline gap-2">
-      <span className={`font-bold text-gray-900 ${SIZE_MAP[size]}`}>
+      <span className={`font-bold text-gray-900 ${sizeMap[size]}`}>
         ₹{Number(discountedPrice || price).toLocaleString("en-IN")}
       </span>
       {discountedPrice && (
