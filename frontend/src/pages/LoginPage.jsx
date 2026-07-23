@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { useAuthStore } from "../store/authStore";
 import { Eye, EyeOff } from "lucide-react";
 
+// ── Login ─────────────────────────────────────────────────────────────────────
 export function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [showPass, setShowPass] = useState(false);
@@ -30,7 +31,7 @@ export function LoginPage() {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-dvh flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -43,11 +44,16 @@ export function LoginPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
+          {/* ✅ Fix: label-has-associated-control + no-placeholder-only-field */}
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+            <label
+              htmlFor="login-email"
+              className="text-xs font-medium text-gray-600 block mb-1.5"
+            >
               Email
             </label>
             <input
+              id="login-email"
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -56,12 +62,17 @@ export function LoginPage() {
               autoComplete="email"
             />
           </div>
+
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+            <label
+              htmlFor="login-password"
+              className="text-xs font-medium text-gray-600 block mb-1.5"
+            >
               Password
             </label>
             <div className="relative">
               <input
+                id="login-password"
                 type={showPass ? "text" : "password"}
                 value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -69,15 +80,18 @@ export function LoginPage() {
                 className="input pr-10"
                 autoComplete="current-password"
               />
+              {/* ✅ Fix: aria-label (control-has-associated-label) */}
               <button
                 type="button"
                 onClick={() => setShowPass(!showPass)}
+                aria-label={showPass ? "Hide password" : "Show password"}
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
               >
                 {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
           </div>
+
           <button
             type="submit"
             disabled={loading}
@@ -101,6 +115,7 @@ export function LoginPage() {
   );
 }
 
+// ── Register ──────────────────────────────────────────────────────────────────
 export function RegisterPage() {
   const [form, setForm] = useState({
     name: "",
@@ -132,7 +147,7 @@ export function RegisterPage() {
   };
 
   return (
-    <div className="min-h-[70vh] flex items-center justify-center px-4 py-12">
+    <div className="min-h-dvh flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -145,22 +160,32 @@ export function RegisterPage() {
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4">
+          {/* ✅ Fix: all labels have htmlFor + inputs have matching id */}
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
-              Full Name *
+            <label
+              htmlFor="reg-name"
+              className="text-xs font-medium text-gray-600 block mb-1.5"
+            >
+              Full Name <span className="text-red-500">*</span>
             </label>
             <input
+              id="reg-name"
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Your full name"
               className="input"
             />
           </div>
+
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
+            <label
+              htmlFor="reg-email"
+              className="text-xs font-medium text-gray-600 block mb-1.5"
+            >
               Email
             </label>
             <input
+              id="reg-email"
               type="email"
               value={form.email}
               onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -168,15 +193,20 @@ export function RegisterPage() {
               className="input"
             />
           </div>
+
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
-              Mobile (optional)
+            <label
+              htmlFor="reg-phone"
+              className="text-xs font-medium text-gray-600 block mb-1.5"
+            >
+              Mobile <span className="text-gray-400">(optional)</span>
             </label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
                 +91
               </span>
               <input
+                id="reg-phone"
                 value={form.phone}
                 onChange={(e) => setForm({ ...form, phone: e.target.value })}
                 placeholder="10-digit number"
@@ -185,11 +215,16 @@ export function RegisterPage() {
               />
             </div>
           </div>
+
           <div>
-            <label className="text-xs font-medium text-gray-600 block mb-1.5">
-              Password *
+            <label
+              htmlFor="reg-password"
+              className="text-xs font-medium text-gray-600 block mb-1.5"
+            >
+              Password <span className="text-red-500">*</span>
             </label>
             <input
+              id="reg-password"
               type="password"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
@@ -197,6 +232,7 @@ export function RegisterPage() {
               className="input"
             />
           </div>
+
           <button
             type="submit"
             disabled={loading}
