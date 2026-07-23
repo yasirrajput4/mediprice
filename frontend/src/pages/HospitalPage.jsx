@@ -215,7 +215,7 @@ export default function HospitalPage() {
             {filteredServices.map((svc) => (
               <div
                 key={svc.hospital_service_id}
-                className="card flex items-center gap-4 hover:shadow-md transition-all"
+                className="card flex items-center gap-4 hover:shadow-md transition-shadow"
               >
                 <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0 text-xl">
                   {svc.category_icon}
