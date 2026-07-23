@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Calendar, Search, ChevronDown } from "lucide-react";
+import { Calendar, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { adminApi } from "../../services/apiServices";
 import {
@@ -71,12 +71,17 @@ export default function AdminBookingsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
+        {/* ✅ Fix: label + htmlFor (control-has-associated-label) */}
         <div className="relative">
+          <label htmlFor="filter-date" className="sr-only">
+            Filter by date
+          </label>
           <Calendar
             size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
           />
           <input
+            id="filter-date"
             type="date"
             value={date}
             onChange={(e) => {
@@ -87,7 +92,11 @@ export default function AdminBookingsPage() {
           />
         </div>
 
+        <label htmlFor="filter-status" className="sr-only">
+          Filter by status
+        </label>
         <select
+          id="filter-status"
           value={statusFilter}
           onChange={(e) => {
             setStatusFilter(e.target.value);
@@ -225,28 +234,44 @@ function StatusDropdown({ current, onSelect, disabled }) {
         type="button"
         onClick={() => setOpen(!open)}
         disabled={disabled}
-        className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition disabled:opacity-40"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Update booking status"
+        className="flex items-center gap-1 text-xs text-gray-500 hover:text-blue-600 px-2 py-1.5 rounded-lg hover:bg-blue-50 transition-colors disabled:opacity-40"
       >
         Update <ChevronDown size={12} />
       </button>
+
       {open && (
         <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1 overflow-hidden">
+          {/* ✅ Fix: static div→button (no-static-element-interactions + click-events-have-key-events) */}
+          <button
+            type="button"
+            aria-label="Close status dropdown"
+            onClick={() => setOpen(false)}
+            onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
+            className="fixed inset-0 z-10 w-full h-full cursor-default bg-transparent border-0"
+          />
+          <ul
+            role="listbox"
+            aria-label="Select new status"
+            className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1 overflow-hidden"
+          >
             {next.map((s) => (
-              <button
-                type="button"
-                key={s}
-                onClick={() => {
-                  onSelect(s);
-                  setOpen(false);
-                }}
-                className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 capitalize transition"
-              >
-                {s.replace("_", " ")}
-              </button>
+              <li key={s} role="option" aria-selected={false}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    onSelect(s);
+                    setOpen(false);
+                  }}
+                  className="w-full text-left px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 capitalize transition-colors"
+                >
+                  {s.replace("_", " ")}
+                </button>
+              </li>
             ))}
-          </div>
+          </ul>
         </>
       )}
     </div>
