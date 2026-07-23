@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Check, X, Plus, Search } from "lucide-react";
+import { Pencil, Check, X, Search } from "lucide-react";
 import toast from "react-hot-toast";
 import { adminApi } from "../../services/apiServices";
 import { LoadingSpinner, Badge } from "../../components/common/UI";
@@ -50,10 +50,10 @@ export default function AdminServicesPage() {
     });
   };
 
-  // Group by category
   const filtered = services.filter((s) =>
     s.name.toLowerCase().includes(searchQ.toLowerCase()),
   );
+
   const grouped = filtered.reduce((acc, s) => {
     if (!acc[s.category]) acc[s.category] = [];
     acc[s.category].push(s);
@@ -78,7 +78,12 @@ export default function AdminServicesPage() {
             size={15}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
+          {/* ✅ Fix: label + htmlFor (control-has-associated-label) */}
+          <label htmlFor="service-search" className="sr-only">
+            Search services
+          </label>
           <input
+            id="service-search"
             value={searchQ}
             onChange={(e) => setSearchQ(e.target.value)}
             placeholder="Search services…"
@@ -130,69 +135,105 @@ export default function AdminServicesPage() {
                         </div>
                       )}
                     </td>
+
                     <td className="px-5 py-3.5 text-right">
                       {isEditing ? (
-                        <input
-                          type="number"
-                          value={editForm.price}
-                          onChange={(e) =>
-                            setEditForm({ ...editForm, price: e.target.value })
-                          }
-                          className="input w-28 text-right text-sm py-1.5"
-                          min={0}
-                          step={10}
-                        />
+                        <>
+                          {/* ✅ Fix: aria-label (control-has-associated-label) */}
+                          <label
+                            htmlFor={`price-${svc.hospital_service_id}`}
+                            className="sr-only"
+                          >
+                            Price for {svc.name}
+                          </label>
+                          <input
+                            id={`price-${svc.hospital_service_id}`}
+                            type="number"
+                            value={editForm.price}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                price: e.target.value,
+                              })
+                            }
+                            className="input w-28 text-right text-sm py-1.5"
+                            min={0}
+                            step={10}
+                          />
+                        </>
                       ) : (
                         <span className="font-semibold text-gray-900">
                           ₹{Number(svc.price).toLocaleString("en-IN")}
                         </span>
                       )}
                     </td>
+
                     <td className="px-5 py-3.5 text-right hidden sm:table-cell">
                       {isEditing ? (
-                        <input
-                          type="number"
-                          value={editForm.waitTimeMin}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              waitTimeMin: e.target.value,
-                            })
-                          }
-                          className="input w-20 text-right text-sm py-1.5"
-                          min={1}
-                        />
+                        <>
+                          <label
+                            htmlFor={`wait-${svc.hospital_service_id}`}
+                            className="sr-only"
+                          >
+                            Wait time for {svc.name}
+                          </label>
+                          <input
+                            id={`wait-${svc.hospital_service_id}`}
+                            type="number"
+                            value={editForm.waitTimeMin}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                waitTimeMin: e.target.value,
+                              })
+                            }
+                            className="input w-20 text-right text-sm py-1.5"
+                            min={1}
+                          />
+                        </>
                       ) : (
                         <span className="text-gray-600">
                           {svc.wait_time_min} min
                         </span>
                       )}
                     </td>
+
                     <td className="px-5 py-3.5 text-center hidden md:table-cell">
                       {isEditing ? (
-                        <input
-                          type="checkbox"
-                          checked={editForm.isAvailable}
-                          onChange={(e) =>
-                            setEditForm({
-                              ...editForm,
-                              isAvailable: e.target.checked,
-                            })
-                          }
-                          className="w-4 h-4 accent-blue-600"
-                        />
+                        <>
+                          <label
+                            htmlFor={`avail-${svc.hospital_service_id}`}
+                            className="sr-only"
+                          >
+                            Available for {svc.name}
+                          </label>
+                          <input
+                            id={`avail-${svc.hospital_service_id}`}
+                            type="checkbox"
+                            checked={editForm.isAvailable}
+                            onChange={(e) =>
+                              setEditForm({
+                                ...editForm,
+                                isAvailable: e.target.checked,
+                              })
+                            }
+                            className="w-4 h-4 accent-blue-600"
+                          />
+                        </>
                       ) : (
                         <Badge color={svc.is_available ? "green" : "red"}>
                           {svc.is_available ? "Active" : "Inactive"}
                         </Badge>
                       )}
                     </td>
+
                     <td className="px-5 py-3.5 text-right text-xs text-gray-400 hidden md:table-cell">
                       {new Date(svc.last_updated).toLocaleDateString("en-IN", {
                         day: "numeric",
                         month: "short",
                       })}
                     </td>
+
                     <td className="px-5 py-3.5 text-right">
                       {isEditing ? (
                         <div className="flex items-center justify-end gap-1">
@@ -200,14 +241,16 @@ export default function AdminServicesPage() {
                             type="button"
                             onClick={() => saveEdit(svc)}
                             disabled={updateMutation.isPending}
-                            className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition"
+                            aria-label={`Save changes for ${svc.name}`}
+                            className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
                           >
                             <Check size={15} />
                           </button>
                           <button
                             type="button"
                             onClick={() => setEditingId(null)}
-                            className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
+                            aria-label="Cancel editing"
+                            className="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors"
                           >
                             <X size={15} />
                           </button>
@@ -216,7 +259,8 @@ export default function AdminServicesPage() {
                         <button
                           type="button"
                           onClick={() => startEdit(svc)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition"
+                          aria-label={`Edit ${svc.name}`}
+                          className="p-1.5 rounded-lg text-gray-400 hover:bg-gray-100 hover:text-blue-600 transition-colors"
                         >
                           <Pencil size={15} />
                         </button>
