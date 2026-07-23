@@ -1,29 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Download, X } from "lucide-react";
 
-/**
- * PWAInstallPrompt
- * Shows a custom "Install App" banner when the browser fires
- * the `beforeinstallprompt` event (Chrome / Edge / Android).
- * iOS shows a manual instruction instead.
- */
 export default function PWAInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  // ✅ Fix: useState→useRef (rerender-state-only-in-handlers)
+  const deferredPrompt = useRef(null);
   const [showBanner, setShowBanner] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    // Don't show if already dismissed in this session
     if (sessionStorage.getItem("pwa_banner_dismissed")) return;
 
-    // Detect iOS
     const ios =
       /iphone|ipad|ipod/i.test(navigator.userAgent) &&
       !window.navigator.standalone;
     setIsIOS(ios);
 
-    // Already installed — don't show
     if (window.matchMedia("(display-mode: standalone)").matches) return;
 
     if (ios) {
@@ -31,10 +23,9 @@ export default function PWAInstallPrompt() {
       return;
     }
 
-    // Chrome / Edge — capture the install event
     const handler = (e) => {
       e.preventDefault();
-      setDeferredPrompt(e);
+      deferredPrompt.current = e;
       setShowBanner(true);
     };
 
@@ -43,13 +34,11 @@ export default function PWAInstallPrompt() {
   }, []);
 
   const handleInstall = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") {
-      setShowBanner(false);
-    }
-    setDeferredPrompt(null);
+    if (!deferredPrompt.current) return;
+    deferredPrompt.current.prompt();
+    const { outcome } = await deferredPrompt.current.userChoice;
+    if (outcome === "accepted") setShowBanner(false);
+    deferredPrompt.current = null;
   };
 
   const handleDismiss = () => {
@@ -64,7 +53,6 @@ export default function PWAInstallPrompt() {
     <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:right-4 md:w-80">
       <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-4">
         <div className="flex items-start gap-3">
-          {/* Icon */}
           <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
             <span className="text-white font-bold text-sm">M</span>
           </div>
@@ -103,7 +91,6 @@ export default function PWAInstallPrompt() {
             )}
           </div>
 
-          {/* Dismiss */}
           <button
             type="button"
             onClick={handleDismiss}
