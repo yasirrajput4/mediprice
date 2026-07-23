@@ -5,9 +5,7 @@ import {
   Search,
   SlidersHorizontal,
   MapPin,
-  Star,
   Clock,
-  ChevronDown,
   X,
   ArrowUpDown,
   Map,
@@ -34,8 +32,12 @@ export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const [q, setQ] = useState(searchParams.get("q") || "");
-  const [city, setCity] = useState(searchParams.get("city") || "Ahmedabad");
+  // ✅ Fix: lazy state initializer (rerender-lazy-state-init)
+  const [q, setQ] = useState(() => searchParams.get("q") || "");
+  const [city, setCity] = useState(
+    () => searchParams.get("city") || "Ahmedabad",
+  );
+
   const [sort, setSort] = useState("price");
   const [minRating, setMinRating] = useState("");
   const [maxPrice, setMaxPrice] = useState("");
@@ -43,11 +45,10 @@ export default function SearchPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [page, setPage] = useState(1);
   const [serviceId, setServiceId] = useState(null);
-  const [viewMode, setViewMode] = useState("list"); // 'list' | 'map'
+  const [viewMode, setViewMode] = useState("list");
 
   const category = searchParams.get("category") || "";
 
-  // First: search for the service to get a service_id for price filtering
   const { data: serviceSearch } = useQuery({
     queryKey: ["service-search", q],
     queryFn: () => servicesApi.search({ q, limit: 1 }),
@@ -73,7 +74,7 @@ export default function SearchPage() {
     ...(serviceId && { service_id: serviceId }),
   };
 
-  const { data, isLoading, isFetching } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ["hospitals", params],
     queryFn: () => hospitalsApi.list(params),
     keepPreviousData: true,
@@ -110,7 +111,12 @@ export default function SearchPage() {
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
+          {/* ✅ Fix: visible label + htmlFor (no-placeholder-only-field + label-has-associated-control) */}
+          <label htmlFor="search-q" className="sr-only">
+            Search service
+          </label>
           <input
+            id="search-q"
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search service…"
@@ -122,7 +128,11 @@ export default function SearchPage() {
             size={16}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
           />
+          <label htmlFor="search-city" className="sr-only">
+            City
+          </label>
           <input
+            id="search-city"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             placeholder="City"
@@ -135,7 +145,7 @@ export default function SearchPage() {
       </form>
 
       <div className="flex flex-col lg:flex-row gap-6">
-        {/* Filters — sidebar on desktop, drawer on mobile */}
+        {/* Filters sidebar */}
         <aside
           className={`lg:w-56 flex-shrink-0 ${filterOpen ? "block" : "hidden lg:block"}`}
         >
@@ -155,33 +165,41 @@ export default function SearchPage() {
 
             {/* Min rating */}
             <div className="mb-5">
-              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-2">
-                Min Rating
-              </label>
-              <div className="flex gap-1">
-                {[3, 3.5, 4, 4.5].map((r) => (
-                  <button
-                    type="button"
-                    key={r}
-                    onClick={() => setMinRating(minRating == r ? "" : r)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${
-                      minRating == r
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "border-gray-200 text-gray-600 hover:border-blue-300"
-                    }`}
-                  >
-                    {r}+
-                  </button>
-                ))}
-              </div>
+              {/* ✅ Fix: label-has-associated-control — fieldset+legend for button groups */}
+              <fieldset>
+                <legend className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
+                  Min Rating
+                </legend>
+                <div className="flex gap-1">
+                  {[3, 3.5, 4, 4.5].map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => setMinRating(minRating == r ? "" : r)}
+                      aria-pressed={minRating == r}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        minRating == r
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "border-gray-200 text-gray-600 hover:border-blue-300"
+                      }`}
+                    >
+                      {r}+
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
             </div>
 
             {/* Max price */}
             <div className="mb-5">
-              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-2">
+              <label
+                htmlFor="filter-max-price"
+                className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-2"
+              >
                 Max Price (₹)
               </label>
               <input
+                id="filter-max-price"
                 type="number"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(e.target.value)}
@@ -192,25 +210,28 @@ export default function SearchPage() {
 
             {/* Max wait */}
             <div className="mb-5">
-              <label className="text-xs font-medium text-gray-600 uppercase tracking-wide block mb-2">
-                Max Wait (min)
-              </label>
-              <div className="flex gap-1">
-                {[15, 30, 60].map((w) => (
-                  <button
-                    type="button"
-                    key={w}
-                    onClick={() => setMaxWait(maxWait == w ? "" : w)}
-                    className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition ${
-                      maxWait == w
-                        ? "bg-blue-600 text-white border-blue-600"
-                        : "border-gray-200 text-gray-600 hover:border-blue-300"
-                    }`}
-                  >
-                    {w}m
-                  </button>
-                ))}
-              </div>
+              <fieldset>
+                <legend className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-2">
+                  Max Wait (min)
+                </legend>
+                <div className="flex gap-1">
+                  {[15, 30, 60].map((w) => (
+                    <button
+                      key={w}
+                      type="button"
+                      onClick={() => setMaxWait(maxWait == w ? "" : w)}
+                      aria-pressed={maxWait == w}
+                      className={`flex-1 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                        maxWait == w
+                          ? "bg-blue-600 text-white border-blue-600"
+                          : "border-gray-200 text-gray-600 hover:border-blue-300"
+                      }`}
+                    >
+                      {w}m
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
             </div>
 
             <button
@@ -250,13 +271,16 @@ export default function SearchPage() {
                 </span>
               )}
             </div>
+
             <div className="flex items-center gap-2">
               {/* Map / List toggle */}
               <div className="flex rounded-lg border border-gray-200 overflow-hidden">
                 <button
                   type="button"
                   onClick={() => setViewMode("list")}
-                  className={`px-3 py-1.5 text-xs flex items-center gap-1 transition ${
+                  aria-pressed={viewMode === "list"}
+                  aria-label="List view"
+                  className={`px-3 py-1.5 text-xs flex items-center gap-1 transition-colors ${
                     viewMode === "list"
                       ? "bg-blue-600 text-white"
                       : "text-gray-500 hover:bg-gray-50"
@@ -267,7 +291,9 @@ export default function SearchPage() {
                 <button
                   type="button"
                   onClick={() => setViewMode("map")}
-                  className={`px-3 py-1.5 text-xs flex items-center gap-1 transition ${
+                  aria-pressed={viewMode === "map"}
+                  aria-label="Map view"
+                  className={`px-3 py-1.5 text-xs flex items-center gap-1 transition-colors ${
                     viewMode === "map"
                       ? "bg-blue-600 text-white"
                       : "text-gray-500 hover:bg-gray-50"
@@ -278,7 +304,12 @@ export default function SearchPage() {
               </div>
 
               <ArrowUpDown size={14} className="text-gray-400" />
+              {/* ✅ Fix: aria-label on select (control-has-associated-label) */}
+              <label htmlFor="sort-select" className="sr-only">
+                Sort by
+              </label>
               <select
+                id="sort-select"
                 value={sort}
                 onChange={(e) => {
                   setSort(e.target.value);
@@ -306,7 +337,7 @@ export default function SearchPage() {
             </div>
           )}
 
-          {/* Cards */}
+          {/* List View */}
           {isLoading ? (
             <LoadingSpinner text="Searching hospitals..." />
           ) : viewMode === "list" && hospitals.length === 0 ? (
@@ -349,15 +380,11 @@ export default function SearchPage() {
 
 function HospitalCard({ hospital, serviceId, serviceName }) {
   const navigate = useNavigate();
-
   return (
-    <div className="card hover:shadow-md transition-all flex flex-col sm:flex-row gap-4">
-      {/* Logo */}
+    <div className="card hover:shadow-md transition-shadow flex flex-col sm:flex-row gap-4">
       <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-100 to-blue-50 flex items-center justify-center flex-shrink-0 text-2xl font-bold text-blue-600">
         {hospital.name.charAt(0)}
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
