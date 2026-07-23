@@ -5,7 +5,6 @@ import {
   CalendarDays,
   LogOut,
   Menu,
-  X,
 } from "lucide-react";
 import { useState } from "react";
 import { useAuthStore } from "../../store/authStore";
@@ -41,11 +40,12 @@ export default function AdminLayout() {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
+    // ✅ Fix: h-screen → h-dvh (prefer-dvh-over-vh)
+    <div className="flex h-dvh bg-gray-50 overflow-hidden">
       {/* Sidebar */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-60 bg-gray-900 text-white flex flex-col transition-transform duration-200
-        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:relative lg:translate-x-0`}
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} lg:relative lg:translate-x-0`}
       >
         {/* Logo */}
         <div className="px-5 py-5 border-b border-gray-800">
@@ -88,9 +88,11 @@ export default function AdminLayout() {
             </div>
             <div className="text-xs text-gray-400 truncate">{user?.email}</div>
           </div>
+          {/* ✅ Fix: control-has-associated-label — aria-label added */}
           <button
             type="button"
             onClick={handleLogout}
+            aria-label="Logout from admin panel"
             className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-400 hover:bg-red-900/40 hover:text-red-400 transition-colors"
           >
             <LogOut size={18} /> Logout
@@ -98,11 +100,14 @@ export default function AdminLayout() {
         </div>
       </aside>
 
-      {/* Overlay for mobile */}
+      {/* ✅ Fix: static div with onClick → button (no-static-element-interactions + click-events-have-key-events) */}
       {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+        <button
+          type="button"
+          aria-label="Close sidebar"
           onClick={() => setSidebarOpen(false)}
+          onKeyDown={(e) => e.key === "Escape" && setSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden w-full h-full cursor-default border-0"
         />
       )}
 
@@ -113,6 +118,7 @@ export default function AdminLayout() {
           <button
             type="button"
             onClick={() => setSidebarOpen(true)}
+            aria-label="Open sidebar menu"
             className="lg:hidden p-1.5 rounded-lg text-gray-500 hover:bg-gray-100"
           >
             <Menu size={20} />
