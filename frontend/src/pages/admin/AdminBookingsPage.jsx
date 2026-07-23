@@ -71,7 +71,6 @@ export default function AdminBookingsPage() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3 items-center">
-        {/* ✅ Fix: label + htmlFor (control-has-associated-label) */}
         <div className="relative">
           <label htmlFor="filter-date" className="sr-only">
             Filter by date
@@ -244,7 +243,6 @@ function StatusDropdown({ current, onSelect, disabled }) {
 
       {open && (
         <>
-          {/* ✅ Fix: static div→button (no-static-element-interactions + click-events-have-key-events) */}
           <button
             type="button"
             aria-label="Close status dropdown"
@@ -252,13 +250,10 @@ function StatusDropdown({ current, onSelect, disabled }) {
             onKeyDown={(e) => e.key === "Escape" && setOpen(false)}
             className="fixed inset-0 z-10 w-full h-full cursor-default bg-transparent border-0"
           />
-          <ul
-            role="listbox"
-            aria-label="Select new status"
-            className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1 overflow-hidden"
-          >
+          {/* ✅ Fix: Removed role="listbox" and aria-label from the <ul> element to prevent nested interactive/focusable role conflicts */}
+          <ul className="absolute right-0 mt-1 w-36 bg-white border border-gray-100 rounded-xl shadow-lg z-20 py-1 overflow-hidden">
             {next.map((s) => (
-              <li key={s} role="option" aria-selected={false}>
+              <li key={s} role="presentation">
                 <button
                   type="button"
                   onClick={() => {
