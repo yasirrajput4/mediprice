@@ -294,27 +294,34 @@ export default function BookingPage() {
                 </div>
 
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1.5">
+                  <label
+                    htmlFor="patient-relation"
+                    className="text-xs font-medium text-gray-600 block mb-1.5"
+                  >
                     Booking For
                   </label>
                   <div className="flex gap-2 flex-wrap">
-                    {["self", "spouse", "parent", "child", "other"].map((r) => (
-                      <button
-                        key={r}
-                        type="button"
-                        onClick={() => setForm({ ...form, patientRelation: r })}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors ${
-                          form.patientRelation === r
-                            ? "bg-blue-600 text-white border-blue-600"
-                            : "border-gray-200 text-gray-600 hover:border-blue-300"
-                        }`}
-                      >
-                        {r}
-                      </button>
-                    ))}
+                    {["self", "spouse", "parent", "child", "other"].map(
+                      (r, index) => (
+                        <button
+                          key={r}
+                          id={index === 0 ? "patient-relation" : undefined}
+                          type="button"
+                          onClick={() =>
+                            setForm({ ...form, patientRelation: r })
+                          }
+                          className={`px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors ${
+                            form.patientRelation === r
+                              ? "bg-blue-600 text-white border-blue-600"
+                              : "border-gray-200 text-gray-600 hover:border-blue-300"
+                          }`}
+                        >
+                          {r}
+                        </button>
+                      ),
+                    )}
                   </div>
                 </div>
-
                 <div>
                   <label
                     htmlFor="booking-notes"
