@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -44,7 +44,11 @@ export default function BookingPage() {
 
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedSlot, setSelectedSlot] = useState(null);
-  const [step, setStep] = useState(1); // 1=slot, 2=details, 3=payment
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Fix: useState→useRef (rerender-state-only-in-handlers — value never shown on screen)
+  const createdBooking = useRef(null);
 
   const [form, setForm] = useState({
     patientName: user?.name || "",
@@ -52,10 +56,7 @@ export default function BookingPage() {
     patientRelation: "self",
     notes: "",
   });
-  const [loading, setLoading] = useState(false);
-  const [createdBooking, setCreatedBooking] = useState(null);
 
-  // Today's date string
   const today = new Date().toISOString().split("T")[0];
 
   const { data: hospital, isLoading: hospitalLoading } = useQuery({
@@ -89,10 +90,8 @@ export default function BookingPage() {
       toast.error("Enter a valid 10-digit mobile number");
       return;
     }
-
     setLoading(true);
     try {
-      // 1. Create booking
       const booking = await bookingsApi.create({
         hospitalId: parseInt(hospitalId),
         serviceId: parseInt(serviceId),
@@ -101,19 +100,18 @@ export default function BookingPage() {
         slotTime: selectedSlot?.time,
         ...form,
       });
-      setCreatedBooking(booking);
+      createdBooking.current = booking;
 
-      // 2. Initiate Razorpay
       await initiateRazorpayPayment({
         bookingId: booking.id,
         bookingUuid: booking.uuid,
         userName: form.patientName,
         userPhone: form.patientPhone,
-        onSuccess: (result) => {
+        onSuccess: () => {
           toast.success("Payment successful! Booking confirmed.");
           navigate(`/booking/${booking.uuid}/confirm`);
         },
-        onFailure: (err) => {
+        onFailure: () => {
           toast.error("Payment failed. You can retry from My Bookings.");
           navigate(`/booking/${booking.uuid}/confirm`);
         },
@@ -129,7 +127,7 @@ export default function BookingPage() {
 
   if (hospitalLoading) return <LoadingSpinner />;
 
-  const totalAmount = (service?.price || 0) + 49; // ₹49 platform fee
+  const totalAmount = (service?.price || 0) + 49;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
@@ -172,7 +170,6 @@ export default function BookingPage() {
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
-        {/* Main content */}
         <div className="md:col-span-2 space-y-5">
           {/* Step 1 — Slot */}
           {step === 1 && (
@@ -182,17 +179,16 @@ export default function BookingPage() {
                 Time
               </h2>
 
-              {/* Dates */}
               <div className="flex gap-2 overflow-x-auto pb-2 mb-5">
                 {availableDates.map((date) => (
                   <button
-                    type="button"
                     key={date}
+                    type="button"
                     onClick={() => {
                       setSelectedDate(date);
                       setSelectedSlot(null);
                     }}
-                    className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium border transition ${
+                    className={`flex-shrink-0 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                       selectedDate === date
                         ? "bg-blue-600 text-white border-blue-600"
                         : "border-gray-200 text-gray-700 hover:border-blue-300"
@@ -208,7 +204,6 @@ export default function BookingPage() {
                 )}
               </div>
 
-              {/* Times */}
               {selectedDate && (
                 <div>
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">
@@ -217,10 +212,10 @@ export default function BookingPage() {
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                     {slotsForDate.map((slot) => (
                       <button
-                        type="button"
                         key={slot.id}
+                        type="button"
                         onClick={() => setSelectedSlot(slot)}
-                        className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                        className={`py-2.5 rounded-xl text-sm font-medium border transition-colors ${
                           selectedSlot?.id === slot.id
                             ? "bg-blue-600 text-white border-blue-600"
                             : "border-gray-200 text-gray-700 hover:border-blue-300"
@@ -255,11 +250,16 @@ export default function BookingPage() {
               </h2>
 
               <div className="space-y-4">
+                {/* ✅ Fix: label htmlFor + id on input (label-has-associated-control + no-placeholder-only-field) */}
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1.5">
-                    Patient Name *
+                  <label
+                    htmlFor="patient-name"
+                    className="text-xs font-medium text-gray-600 block mb-1.5"
+                  >
+                    Patient Name <span className="text-red-500">*</span>
                   </label>
                   <input
+                    id="patient-name"
                     value={form.patientName}
                     onChange={(e) =>
                       setForm({ ...form, patientName: e.target.value })
@@ -268,15 +268,20 @@ export default function BookingPage() {
                     className="input"
                   />
                 </div>
+
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1.5">
-                    Mobile Number *
+                  <label
+                    htmlFor="patient-phone"
+                    className="text-xs font-medium text-gray-600 block mb-1.5"
+                  >
+                    Mobile Number <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
                       +91
                     </span>
                     <input
+                      id="patient-phone"
                       value={form.patientPhone}
                       onChange={(e) =>
                         setForm({ ...form, patientPhone: e.target.value })
@@ -287,17 +292,18 @@ export default function BookingPage() {
                     />
                   </div>
                 </div>
+
                 <div>
                   <label className="text-xs font-medium text-gray-600 block mb-1.5">
                     Booking For
                   </label>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {["self", "spouse", "parent", "child", "other"].map((r) => (
                       <button
-                        type="button"
                         key={r}
+                        type="button"
                         onClick={() => setForm({ ...form, patientRelation: r })}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition ${
+                        className={`px-3 py-1.5 rounded-lg text-xs font-medium border capitalize transition-colors ${
                           form.patientRelation === r
                             ? "bg-blue-600 text-white border-blue-600"
                             : "border-gray-200 text-gray-600 hover:border-blue-300"
@@ -308,11 +314,16 @@ export default function BookingPage() {
                     ))}
                   </div>
                 </div>
+
                 <div>
-                  <label className="text-xs font-medium text-gray-600 block mb-1.5">
-                    Notes (optional)
+                  <label
+                    htmlFor="booking-notes"
+                    className="text-xs font-medium text-gray-600 block mb-1.5"
+                  >
+                    Notes <span className="text-gray-400">(optional)</span>
                   </label>
                   <textarea
+                    id="booking-notes"
                     value={form.notes}
                     onChange={(e) =>
                       setForm({ ...form, notes: e.target.value })
@@ -405,11 +416,9 @@ export default function BookingPage() {
                   disabled={loading}
                   className="btn-primary flex-1 py-3 flex items-center justify-center gap-2"
                 >
-                  {loading ? (
-                    <>Processing…</>
-                  ) : (
-                    <>Pay ₹{Number(totalAmount).toLocaleString("en-IN")}</>
-                  )}
+                  {loading
+                    ? "Processing…"
+                    : `Pay ₹${Number(totalAmount).toLocaleString("en-IN")}`}
                 </button>
               </div>
             </div>
