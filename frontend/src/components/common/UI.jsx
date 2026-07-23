@@ -6,6 +6,17 @@ import {
   ChevronRight,
 } from "lucide-react";
 
+const BADGE_COLORS = {
+  blue: "bg-blue-50 text-blue-700",
+  green: "bg-emerald-50 text-emerald-700",
+  amber: "bg-amber-50 text-amber-700",
+  red: "bg-red-50 text-red-700",
+  purple: "bg-purple-50 text-purple-700",
+  gray: "bg-gray-100 text-gray-600",
+};
+
+const PRICE_SIZES = { sm: "text-base", md: "text-xl", lg: "text-2xl" };
+
 // ── StarRating ────────────────────────────────────────────────────────────────
 export function StarRating({
   rating = 0,
@@ -116,25 +127,18 @@ export function Pagination({ page, pages, onChange }) {
 
 // ── Badge ─────────────────────────────────────────────────────────────────────
 export function Badge({ children, color = "blue" }) {
-  const colors = {
-    blue: "bg-blue-50 text-blue-700",
-    green: "bg-emerald-50 text-emerald-700",
-    amber: "bg-amber-50 text-amber-700",
-    red: "bg-red-50 text-red-700",
-    purple: "bg-purple-50 text-purple-700",
-    gray: "bg-gray-100 text-gray-600",
-  };
   return (
-    <span className={`badge ${colors[color] || colors.blue}`}>{children}</span>
+    <span className={`badge ${BADGE_COLORS[color] || BADGE_COLORS.blue}`}>
+      {children}
+    </span>
   );
 }
 
 // ── PriceTag ──────────────────────────────────────────────────────────────────
 export function PriceTag({ price, discountedPrice, size = "md" }) {
-  const sizeMap = { sm: "text-base", md: "text-xl", lg: "text-2xl" };
   return (
     <span className="flex items-baseline gap-2">
-      <span className={`font-bold text-gray-900 ${sizeMap[size]}`}>
+      <span className={`font-bold text-gray-900 ${PRICE_SIZES[size]}`}>
         ₹{Number(discountedPrice || price).toLocaleString("en-IN")}
       </span>
       {discountedPrice && (
