@@ -168,11 +168,15 @@ export default function HospitalPage() {
           {/* Service search + category filter */}
           <div className="flex flex-col sm:flex-row gap-3 mb-5">
             <div className="relative flex-1">
+              <label htmlFor="service-search" className="sr-only">
+                Search service
+              </label>
               <Search
                 size={15}
                 className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
               />
               <input
+                id="service-search"
                 value={serviceSearch}
                 onChange={(e) => setServiceSearch(e.target.value)}
                 placeholder="Search service..."
